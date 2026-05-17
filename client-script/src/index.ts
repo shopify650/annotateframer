@@ -34,6 +34,7 @@ class AnnotateFrame {
   private triggerBtn: HTMLElement | null = null
   private highlightOverlay: HTMLElement | null = null
   private currentScreenshot: string = ""
+  private currentScreenshotPromise: Promise<string> | null = null
 
   constructor() {
     console.log("[AF] Initializing AnnotateFrame...");
@@ -479,24 +480,21 @@ class AnnotateFrame {
     this.selectedEl = target
     target.classList.add("af-selected-element")
 
-    // Show instant toast
-    this.showToast("📸 Capturing screenshot...", "#8b5cf6")
-
-    // Capture screenshot
-    let screenshotBase64 = ""
-    try {
-      const h2c = await this.loadHtml2Canvas()
-      const canvas = await h2c(target, {
-        useCORS: true,
-        backgroundColor: null,
-        logging: false
-      })
-      screenshotBase64 = canvas.toDataURL("image/jpeg", 0.6)
-    } catch (err) {
-      console.error("[AF] Screenshot capture failed:", err)
-    }
-
-    this.currentScreenshot = screenshotBase64
+    // Define the async screenshot promise immediately in the background
+    this.currentScreenshotPromise = (async () => {
+      try {
+        const h2c = await this.loadHtml2Canvas()
+        const canvas = await h2c(target, {
+          useCORS: true,
+          backgroundColor: null,
+          logging: false
+        })
+        return canvas.toDataURL("image/jpeg", 0.6)
+      } catch (err) {
+        console.error("[AF] Background screenshot capture failed:", err)
+        return ""
+      }
+    })()
 
     const xPct = (e.clientX / window.innerWidth) * 100
     const yPct = ((e.clientY + window.scrollY) / document.documentElement.scrollHeight) * 100
@@ -505,6 +503,7 @@ class AnnotateFrame {
     document.removeEventListener("mouseover", this.handleMouseOver, true)
     document.removeEventListener("mouseout", this.handleMouseOut, true)
 
+    // Show modal INSTANTLY (0ms delay for user!)
     this.showNewCommentModal(xPct, yPct, e.clientX, e.clientY)
   }
 
@@ -676,6 +675,17 @@ class AnnotateFrame {
     const btn = document.getElementById("af-submit") as HTMLButtonElement
     btn.disabled = true; btn.textContent = "Sending…"
 
+    // Await background screenshot capture if it hasn't completed yet
+    let screenshotBase64 = ""
+    if (this.currentScreenshotPromise) {
+      btn.textContent = "Finalizing…"
+      try {
+        screenshotBase64 = await this.currentScreenshotPromise
+      } catch (err) {
+        console.error("[AF] Error awaiting screenshot:", err)
+      }
+    }
+
     const payload: any = {
       project_id:  this.projectId,
       x_percent:   xPct,
@@ -688,8 +698,8 @@ class AnnotateFrame {
       viewport_w:  window.innerWidth,
     }
 
-    if (this.currentScreenshot) {
-      payload.screenshot = this.currentScreenshot
+    if (screenshotBase64) {
+      payload.screenshot = screenshotBase64
     }
 
     try {
