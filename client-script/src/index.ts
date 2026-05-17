@@ -25,6 +25,7 @@ class AnnotateFrame {
   private toolbar: HTMLElement | null = null
   private modal: HTMLElement | null = null
   private comments: any[] = [] // Store loaded comments
+  private activeThreadInterval: any = null
 
   // Element Selection & Screenshot properties
   private isSelectionMode = false
@@ -122,6 +123,7 @@ class AnnotateFrame {
     this.triggerBtn?.remove()
     document.querySelectorAll(".af-pin").forEach(p => p.remove())
     if (this.highlightOverlay) this.highlightOverlay.remove()
+    this.removeModal()
   }
 
   private createTriggerButton() {
@@ -173,7 +175,7 @@ class AnnotateFrame {
     this.isActive = false
     document.body.style.cursor = ""
     this.toolbar?.remove()
-    this.modal?.remove()
+    this.removeModal()
     this.clearHoverHighlight()
     if (this.selectedEl) {
       this.selectedEl.classList.remove("af-selected-element")
@@ -333,29 +335,54 @@ class AnnotateFrame {
       .af-btn-submit:hover   { opacity: 0.85; }
       .af-btn-submit:disabled{ opacity: 0.45; cursor: not-allowed; }
 
+      @keyframes af-pin-drop {
+        0% { transform: scale(0) translateY(-20px); opacity: 0; }
+        70% { transform: scale(1.1) translateY(2px); opacity: 0.9; }
+        100% { transform: scale(1) translateY(0); opacity: 1; }
+      }
+      @keyframes af-glow-pulse {
+        0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); }
+        70% { box-shadow: 0 0 0 8px rgba(139, 92, 246, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); }
+      }
+      @keyframes af-glow-pulse-resolved {
+        0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+        70% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+      }
+
       .af-pin {
         position: absolute;
-        width: 28px; height: 28px; border-radius: 50%;
-        background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
-        color: #ffffff; border: 2.5px solid #ffffff;
+        min-width: 44px; height: 26px; border-radius: 30px;
+        background: rgba(139, 92, 246, 0.85);
+        backdrop-filter: blur(8px);
+        -webkit-backdrop-filter: blur(8px);
+        color: #ffffff; border: 1.5px solid rgba(255, 255, 255, 0.25);
         z-index: 2147483638; cursor: pointer; pointer-events: auto;
-        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.45), inset 0 2px 4px rgba(255,255,255,0.3);
         display: flex; align-items: center; justify-content: center;
+        gap: 5px; padding: 0 8px; box-sizing: border-box;
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-        font-size: 11px; font-weight: 800;
-        animation: af-pin-drop 0.3s cubic-bezier(0.34,1.56,0.64,1);
-        transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
+        font-size: 11px; font-weight: 750;
+        animation: af-pin-drop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, af-glow-pulse 2s infinite;
+        transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, border-color 0.2s, box-shadow 0.2s;
+        box-shadow: 0 4px 16px rgba(139, 92, 246, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
       }
       .af-pin:hover {
-        transform: scale(1.15) translateY(-2px);
-        box-shadow: 0 8px 24px rgba(124, 58, 237, 0.6), inset 0 2px 4px rgba(255,255,255,0.3);
+        transform: scale(1.1) translateY(-3px);
+        background: rgba(124, 58, 237, 0.95);
+        border-color: rgba(255, 255, 255, 0.45);
+        box-shadow: 0 8px 24px rgba(139, 92, 246, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
       }
       .af-pin.resolved {
-        background: linear-gradient(135deg, #34d399 0%, #059669 100%);
-        box-shadow: 0 4px 20px rgba(5, 150, 105, 0.45), inset 0 2px 4px rgba(255,255,255,0.3);
+        background: rgba(16, 185, 129, 0.85);
+        border-color: rgba(255, 255, 255, 0.25);
+        animation: af-pin-drop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, af-glow-pulse-resolved 2s infinite;
+        box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
       }
       .af-pin.resolved:hover {
-        box-shadow: 0 8px 24px rgba(5, 150, 105, 0.6), inset 0 2px 4px rgba(255,255,255,0.3);
+        background: rgba(5, 150, 105, 0.95);
+        border-color: rgba(255, 255, 255, 0.45);
+        box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
       }
 
       /* Thread Styles */
@@ -453,7 +480,7 @@ class AnnotateFrame {
   }
 
   private showNewCommentModal(xPct: number, yPct: number, cx: number, cy: number) {
-    this.modal?.remove()
+    this.removeModal()
 
     const safeLeft = Math.min(cx + 14, window.innerWidth  - 336)
     const safeTop  = Math.min(cy + 14, window.innerHeight - 340)
@@ -494,7 +521,7 @@ class AnnotateFrame {
     ;(document.getElementById("af-body") as HTMLTextAreaElement)?.focus()
 
     document.getElementById("af-cancel")?.addEventListener("click", () => {
-      wrap.remove()
+      this.removeModal()
       this.stopSelectionMode()
     })
     document.getElementById("af-submit")?.addEventListener("click", () =>
@@ -503,7 +530,7 @@ class AnnotateFrame {
   }
 
   private showThreadModal(commentId: string, cx: number, cy: number) {
-    this.modal?.remove()
+    this.removeModal()
     const comment = this.comments.find(c => c.id === commentId)
     if (!comment) return
 
@@ -512,6 +539,7 @@ class AnnotateFrame {
 
     const wrap = document.createElement("div")
     wrap.id = "af-modal-wrap"
+    wrap.setAttribute("data-comment-id", comment.id)
     wrap.style.left = `${safeLeft}px`
     wrap.style.top  = `${safeTop}px`
     
@@ -570,10 +598,13 @@ class AnnotateFrame {
     document.body.appendChild(wrap)
     this.modal = wrap
 
-    document.getElementById("af-close")?.addEventListener("click", () => wrap.remove())
+    document.getElementById("af-close")?.addEventListener("click", () => this.removeModal())
     if (!isResolved) {
       document.getElementById("af-send-reply")?.addEventListener("click", () => this.submitReply(comment.id, wrap))
     }
+
+    // Start polling this specific thread for real-time replies/resolves every 4 seconds
+    this.activeThreadInterval = setInterval(() => this.pollReplies(comment.id), 4000)
   }
 
   private async submitComment(xPct: number, yPct: number, modal: HTMLElement) {
@@ -638,7 +669,7 @@ class AnnotateFrame {
         if (data && data[0]) {
           const newComment = { ...data[0], replies: [] }
           this.comments.push(newComment)
-          modal.remove()
+          this.removeModal()
           this.dropPin(newComment, this.comments.length)
           this.showToast("✅ Comment sent!", "#22c55e")
           this.stopSelectionMode()
@@ -686,9 +717,10 @@ class AnnotateFrame {
           if (comment) {
             comment.replies = comment.replies || []
             comment.replies.push(data[0])
+            this.updateThreadModalUI(comment) // Instantly render client's own reply
           }
-          modal.remove()
-          this.showToast("✅ Reply sent!", "#22c55e")
+          ;(document.getElementById("af-reply-body") as HTMLTextAreaElement).value = ""
+          btn.disabled = false; btn.textContent = "Reply →"
         }
       } else {
         this.showToast("❌ Failed to send. Try again.", "#ef4444")
@@ -703,9 +735,18 @@ class AnnotateFrame {
   private dropPin(comment: any, index: number) {
     const pin = document.createElement("div")
     pin.className = "af-pin " + (comment.status === 'resolved' ? 'resolved' : '')
-    pin.textContent = String(index)
+    pin.setAttribute("data-comment-id", comment.id)
+    
+    // Inject dynamic, beautiful comment SVG + number
+    pin.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="display: block;">
+        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+      </svg>
+      <span style="line-height: 1;">${index}</span>
+    `
     const absY = (comment.y_percent / 100) * document.documentElement.scrollHeight
-    pin.style.cssText = "left: calc(" + comment.x_percent + "% - 14px); top: " + (absY - 14) + "px;"
+    // Adjust center positions exactly for a 44px * 26px pill size (22px horizontal offset, 13px vertical offset)
+    pin.style.cssText = "left: calc(" + comment.x_percent + "% - 22px); top: " + (absY - 13) + "px;"
     
     // Add click listener to pin
     pin.addEventListener("click", (e) => {
@@ -787,6 +828,123 @@ class AnnotateFrame {
     t.textContent = msg
     document.body.appendChild(t)
     setTimeout(() => t.remove(), 3500)
+  }
+
+  private removeModal() {
+    if (this.modal) {
+      this.modal.remove()
+      this.modal = null
+    }
+    if (this.activeThreadInterval) {
+      clearInterval(this.activeThreadInterval)
+      this.activeThreadInterval = null
+    }
+  }
+
+  private async pollReplies(commentId: string) {
+    try {
+      const url = `${this.supabaseUrl}/rest/v1/comments?select=*,replies(*)&id=eq.${commentId}`
+      const res = await fetch(url, {
+        headers: { apikey: this.anonKey, Authorization: `Bearer ${this.anonKey}` }
+      })
+      const data = await res.json()
+      if (Array.isArray(data) && data.length > 0) {
+        const updatedComment = data[0]
+        
+        // Update local comments cache
+        const idx = this.comments.findIndex(c => c.id === commentId)
+        if (idx !== -1) {
+          const oldComment = this.comments[idx]
+          const oldRepliesCount = oldComment.replies?.length || 0
+          const newRepliesCount = updatedComment.replies?.length || 0
+          
+          this.comments[idx] = updatedComment
+
+          // If changes occurred, reactively update the open modal thread
+          if (this.modal && this.modal.getAttribute("data-comment-id") === commentId) {
+            if (newRepliesCount > oldRepliesCount || updatedComment.status !== oldComment.status) {
+              this.updateThreadModalUI(updatedComment)
+            }
+          }
+
+          // If resolved status changed, dynamically update the pin class live
+          if (updatedComment.status !== oldComment.status) {
+            document.querySelectorAll(".af-pin").forEach((p: any) => {
+              if (p.getAttribute("data-comment-id") === commentId) {
+                if (updatedComment.status === "resolved") {
+                  p.classList.add("resolved")
+                  p.style.animation = "af-pin-drop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, af-glow-pulse-resolved 2s infinite"
+                } else {
+                  p.classList.remove("resolved")
+                  p.style.animation = "af-pin-drop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, af-glow-pulse 2s infinite"
+                }
+              }
+            })
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[AF] Polling error:", e)
+    }
+  }
+
+  private updateThreadModalUI(comment: any) {
+    if (!this.modal) return
+
+    // Update status pill
+    const h3 = this.modal.querySelector("h3")
+    if (h3) {
+      const isResolved = comment.status === "resolved"
+      const statusPill = isResolved 
+        ? '<span class="af-status-pill af-status-resolved">✅ Resolved</span>'
+        : '<span class="af-status-pill af-status-open">⏳ Open</span>'
+      h3.innerHTML = `<span>Thread</span> ${statusPill}`
+    }
+
+    // Update replies scroll list
+    const scrollContainer = this.modal.querySelector(".af-thread-scroll")
+    if (scrollContainer) {
+      let repliesHtml = ""
+      if (comment.replies && comment.replies.length > 0) {
+        // Sort replies chronologically
+        const sorted = [...comment.replies].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        repliesHtml = sorted.map((r: any) => {
+          return '<div class="af-message ' + (r.author === 'Agency' ? 'agency' : '') + '">' +
+            '<div class="af-msg-header">' +
+              '<span class="af-msg-author">' + r.author + '</span>' +
+              '<span>' + new Date(r.created_at).toLocaleDateString() + '</span>' +
+            '</div>' +
+            '<p class="af-msg-body">' + r.body + '</p>' +
+          '</div>';
+        }).join("")
+      }
+
+      const screenshotHtml = comment.screenshot
+        ? `<div style="margin-top: 8px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);">
+             <img src="${comment.screenshot}" style="width: 100%; max-height: 90px; object-fit: cover; display: block;" />
+           </div>`
+        : "";
+
+      scrollContainer.innerHTML = `
+        <div class="af-message">
+          <div class="af-msg-header">
+            <span class="af-msg-author">${comment.client_name}</span>
+            <span>${new Date(comment.created_at).toLocaleDateString()}</span>
+          </div>
+          <p class="af-msg-body">${comment.body}</p>
+          ${screenshotHtml}
+        </div>
+        ${repliesHtml}
+      `
+      // Autoscroll to bottom
+      scrollContainer.scrollTop = scrollContainer.scrollHeight
+    }
+
+    // If resolved, strip out the reply components so they can't type further replies
+    if (comment.status === "resolved") {
+      document.getElementById("af-reply-body")?.remove()
+      document.getElementById("af-send-reply")?.remove()
+    }
   }
 }
 

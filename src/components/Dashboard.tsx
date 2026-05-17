@@ -23,6 +23,10 @@ export function Dashboard({ session, onSignOut }: Props) {
   const plan: PlanType = session?.user?.email === "xavelop375@esyline.com" ? "agency" : "free"
   const [loading, setLoading] = useState(true)
 
+  // Manual installation states
+  const [showManualSetup, setShowManualSetup] = useState(false)
+  const [permissionError, setPermissionError] = useState<string | null>(null)
+
   // Project Creation Modal State
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newProjectName, setNewProjectName] = useState("")
@@ -154,6 +158,7 @@ export function Dashboard({ session, onSignOut }: Props) {
   async function handleInstall() {
     if (!project) return
     setInstalling(true)
+    setPermissionError(null)
     try {
       await injectAnnotateFrameScript(
         project.id,
@@ -163,19 +168,28 @@ export function Dashboard({ session, onSignOut }: Props) {
       setInstalled(true)
       framer.notify("clientflow comments are now active!", { variant: "success", durationMs: 3000 })
     } catch (err) {
-      framer.notify("Failed to install. Try again.", { variant: "error" })
+      console.error("[AF] Install failed:", err)
+      const errMsg = (err as Error).message || String(err)
+      setPermissionError(errMsg)
+      setShowManualSetup(true)
+      framer.notify(`Failed to install: ${errMsg}`, { variant: "error" })
     } finally {
       setInstalling(false)
     }
   }
 
   async function handleRemove() {
+    setPermissionError(null)
     try {
       await removeAnnotateFrameScript()
       setInstalled(false)
       framer.notify("Comments paused successfully.", { variant: "info", durationMs: 3000 })
     } catch (err) {
-      framer.notify("Failed to pause.", { variant: "error" })
+      console.error("[AF] Pause failed:", err)
+      const errMsg = (err as Error).message || String(err)
+      setPermissionError(errMsg)
+      setShowManualSetup(true)
+      framer.notify(`Failed to pause: ${errMsg}`, { variant: "error" })
     }
   }
 
@@ -340,6 +354,78 @@ export function Dashboard({ session, onSignOut }: Props) {
               </div>
             )}
 
+            {/* Manual Setup Section */}
+            {(showManualSetup || permissionError) && project && (
+              <div className="manual-setup-card" style={{
+                margin: "0 12px 10px",
+                padding: "12px",
+                borderRadius: "10px",
+                background: "rgba(255, 255, 255, 0.03)",
+                border: "1px solid var(--border)",
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px"
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <span style={{ fontSize: "10px", fontWeight: "700", color: "var(--yellow)", textTransform: "uppercase", letterSpacing: "0.5px" }}>⚠️ Manual Setup Required</span>
+                  <button className="btn-ghost" style={{ padding: "2px 6px", fontSize: "9px" }} onClick={() => {
+                    setShowManualSetup(false)
+                    setPermissionError(null)
+                  }}>Hide</button>
+                </div>
+                <p style={{ fontSize: "9px", color: "var(--text-sub)", margin: 0, lineHeight: "1.3" }}>
+                  Your Framer user role lacks permission to publish site scripts automatically. You can easily manage this manually:
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "9px", color: "var(--text-sub)", paddingLeft: "4px", borderLeft: "2px solid var(--border)" }}>
+                  <div><strong>🟢 To Activate:</strong> Copy the code below, paste it in <strong>Framer Settings → Custom Code → End of &lt;body&gt; tag</strong>, and Publish.</div>
+                  <div><strong>🔴 To Pause:</strong> Go to <strong>Framer Settings → Custom Code</strong>, delete the AnnotateFrame code block, and Publish.</div>
+                </div>
+                <div style={{ position: "relative", marginTop: "4px" }}>
+                  <textarea
+                    readOnly
+                    value={`<!-- AnnotateFrame Start -->\n<script>\n  window.ANNOTATEFRAME_PROJECT_ID = "${project.id}";\n  window.ANNOTATEFRAME_SUPABASE_URL = "${import.meta.env.VITE_SUPABASE_URL}";\n  window.ANNOTATEFRAME_ANON_KEY = "${import.meta.env.VITE_SUPABASE_ANON_KEY}";\n</script>\n<script src="https://project-pymvu.vercel.app/annotateframe.min.js" defer></script>\n<!-- AnnotateFrame End -->`}
+                    style={{
+                      width: "100%",
+                      height: "80px",
+                      background: "rgba(0,0,0,0.4)",
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: "6px",
+                      color: "#a78bfa",
+                      fontFamily: "monospace",
+                      fontSize: "8.5px",
+                      padding: "6px",
+                      resize: "none",
+                      outline: "none",
+                      boxSizing: "border-box"
+                    }}
+                    onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+                  />
+                  <button
+                    onClick={() => {
+                      const code = `<!-- AnnotateFrame Start -->\n<script>\n  window.ANNOTATEFRAME_PROJECT_ID = "${project.id}";\n  window.ANNOTATEFRAME_SUPABASE_URL = "${import.meta.env.VITE_SUPABASE_URL}";\n  window.ANNOTATEFRAME_ANON_KEY = "${import.meta.env.VITE_SUPABASE_ANON_KEY}";\n</script>\n<script src="https://project-pymvu.vercel.app/annotateframe.min.js" defer></script>\n<!-- AnnotateFrame End -->`
+                      navigator.clipboard.writeText(code)
+                      framer.notify("Manual script copied!", { variant: "success", durationMs: 2000 })
+                    }}
+                    style={{
+                      position: "absolute",
+                      bottom: "6px",
+                      right: "6px",
+                      background: "var(--accent)",
+                      border: "none",
+                      borderRadius: "4px",
+                      color: "#fff",
+                      fontSize: "9px",
+                      padding: "3px 6px",
+                      cursor: "pointer",
+                      fontWeight: "600"
+                    }}
+                  >
+                    Copy Code
+                  </button>
+                </div>
+              </div>
+            )}
+
             {/* Comments listing feed */}
             <div className="comments-tab" style={{ flex: 1 }}>
               {/* Filter pills */}
@@ -429,6 +515,16 @@ export function Dashboard({ session, onSignOut }: Props) {
               setProjects(prev => prev.map(p => p.id === updated.id ? updated : p))
             }}
             onSelectProject={setProject}
+            onProjectDelete={(deletedId) => {
+              const remaining = projects.filter(p => p.id !== deletedId)
+              setProjects(remaining)
+              if (remaining.length > 0) {
+                setProject(remaining[0])
+              } else {
+                setProject(null)
+                loadOrCreateProject()
+              }
+            }}
           />
         )}
 

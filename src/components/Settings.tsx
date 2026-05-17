@@ -11,6 +11,7 @@ interface Props {
   onSignOut: () => void
   onProjectUpdate: (p: Project) => void
   onSelectProject: (p: Project) => void
+  onProjectDelete: (id: string) => void
 }
 
 const PLANS = [
@@ -59,12 +60,14 @@ export function Settings({
   plan,
   onSignOut,
   onProjectUpdate,
-  onSelectProject
+  onSelectProject,
+  onProjectDelete
 }: Props) {
   const [siteName, setSiteName] = useState(project?.name ?? "")
   const [siteUrl, setSiteUrl] = useState(project?.site_url ?? "")
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
 
   // Sync state if active project changes
   useEffect(() => {
@@ -90,6 +93,23 @@ export function Settings({
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
+  }
+
+  async function deleteProject() {
+    if (!project) return
+
+    const { error } = await supabase
+      .from("projects")
+      .delete()
+      .eq("id", project.id)
+
+    if (error) {
+      console.error("[AF] Delete project failed:", error)
+      framer.notify(`Failed to delete project: ${error.message}`, { variant: "error" })
+    } else {
+      framer.notify("Project deleted.", { variant: "info", durationMs: 2500 })
+      onProjectDelete(project.id)
+    }
   }
 
   function upgrade(url: string) {
@@ -137,9 +157,34 @@ export function Settings({
               placeholder="https://mysite.framer.website"
             />
           </div>
-          <button className="btn-primary btn-sm" onClick={saveProject} disabled={saving}>
-            {saved ? "✅ Saved!" : saving ? "Saving…" : "Save Changes"}
-          </button>
+          <div style={{ display: "flex", gap: "8px", marginTop: "12px", alignItems: "center" }}>
+            <button className="btn-primary btn-sm" onClick={saveProject} disabled={saving}>
+              {saved ? "✅ Saved!" : saving ? "Saving…" : "Save Changes"}
+            </button>
+            {confirmDelete ? (
+              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                <span style={{ fontSize: "10px", color: "var(--red)", fontWeight: "600" }}>Sure?</span>
+                <button 
+                  className="btn-primary btn-sm" 
+                  onClick={deleteProject} 
+                  style={{ background: "var(--red)", borderColor: "var(--red)", color: "#fff", padding: "4px 8px", fontSize: "10.5px" }}
+                >
+                  Yes
+                </button>
+                <button 
+                  className="btn-ghost btn-sm" 
+                  onClick={() => setConfirmDelete(false)}
+                  style={{ padding: "4px 8px", fontSize: "10.5px" }}
+                >
+                  No
+                </button>
+              </div>
+            ) : (
+              <button className="btn-ghost btn-sm" onClick={() => setConfirmDelete(true)} style={{ color: "var(--red)", borderColor: "var(--red)" }}>
+                Delete Project
+              </button>
+            )}
+          </div>
         </section>
       )}
 
