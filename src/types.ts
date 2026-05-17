@@ -22,6 +22,7 @@ export interface Comment {
   resolved_at: string | null
   browser: string | null
   viewport_w: number | null
+  screenshot?: string | null
   created_at: string
   replies?: Reply[]
 }

@@ -288,6 +288,8 @@ export function Dashboard({ session, onSignOut }: Props) {
                   key={c.id}
                   comment={c}
                   onResolve={() => resolveComment(c.id)}
+                  siteUrl={project?.site_url}
+                  inviteToken={project?.invite_token}
                 />
               ))}
             </div>

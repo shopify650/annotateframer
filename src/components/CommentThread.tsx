@@ -5,12 +5,15 @@ import type { Comment, Reply } from "../types"
 interface Props {
   comment: Comment
   onResolve: () => void
+  siteUrl?: string | null
+  inviteToken?: string
 }
 
-export function CommentThread({ comment, onResolve }: Props) {
+export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Props) {
   const [reply, setReply] = useState("")
   const [sending, setSending] = useState(false)
   const [expanded, setExpanded] = useState(true)
+  const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const timeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime()
@@ -37,6 +40,9 @@ export function CommentThread({ comment, onResolve }: Props) {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) sendReply()
   }
+
+  const baseUrl = siteUrl ? (siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`) : ""
+  const deepLink = baseUrl ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}af_token=${inviteToken}&highlight_id=${comment.id}` : ""
 
   return (
     <div className={`comment-card ${comment.status}`}>
@@ -72,8 +78,8 @@ export function CommentThread({ comment, onResolve }: Props) {
 
       {expanded && (
         <>
-          {/* Page & Position */}
-          <div className="comment-meta-row">
+          {/* Page, Position & View on Site */}
+          <div className="comment-meta-row" style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
             <span className="meta-tag" style={{ display: "inline-flex", alignItems: "center" }}>
               <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-file-text" style={{ marginRight: "3px" }}><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></svg>
               {comment.page_path}
@@ -82,13 +88,133 @@ export function CommentThread({ comment, onResolve }: Props) {
               <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-map-pin" style={{ marginRight: "3px" }}><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="12" r="3"/></svg>
               {Math.round(comment.x_percent)}% × {Math.round(comment.y_percent)}%
             </span>
+            {deepLink && (
+              <a
+                href={deepLink}
+                target="_blank"
+                rel="noreferrer"
+                className="meta-tag view-site-tag"
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  textDecoration: "none",
+                  color: "#a78bfa",
+                  fontWeight: "600",
+                  background: "rgba(139, 92, 246, 0.15)",
+                  border: "1px solid rgba(139, 92, 246, 0.3)"
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link" style={{ marginRight: "3px" }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                View on Site
+              </a>
+            )}
           </div>
 
           {/* Body */}
           <p className="comment-body">"{comment.body}"</p>
 
+          {/* Screenshot Preview Element */}
+          {comment.screenshot && (
+            <div
+              className="comment-screenshot-preview"
+              onClick={() => setLightboxOpen(true)}
+              style={{
+                marginTop: "10px",
+                position: "relative",
+                borderRadius: "8px",
+                overflow: "hidden",
+                border: "1px solid rgba(255, 255, 255, 0.08)",
+                cursor: "pointer",
+                maxHeight: "120px"
+              }}
+            >
+              <img
+                src={comment.screenshot}
+                style={{ width: "100%", height: "120px", objectFit: "cover", display: "block" }}
+                alt="Element Snapshot"
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  background: "rgba(15, 15, 20, 0.75)",
+                  backdropFilter: "blur(4px)",
+                  padding: "4px 8px",
+                  fontSize: "10px",
+                  color: "#ccc",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px"
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/></svg>
+                Target Element Screenshot (Click to enlarge)
+              </div>
+            </div>
+          )}
+
+          {/* Lightbox Modal */}
+          {lightboxOpen && comment.screenshot && (
+            <div
+              style={{
+                position: "fixed",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                zIndex: 2147483647,
+                background: "rgba(10, 10, 12, 0.9)",
+                backdropFilter: "blur(20px)",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: "24px"
+              }}
+              onClick={() => setLightboxOpen(false)}
+            >
+              <div
+                style={{
+                  position: "absolute",
+                  top: "20px",
+                  right: "20px",
+                  background: "rgba(255,255,255,0.1)",
+                  border: "none",
+                  color: "#fff",
+                  padding: "8px 16px",
+                  borderRadius: "100px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px"
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
+                Close
+              </div>
+              <img
+                src={comment.screenshot}
+                style={{
+                  maxWidth: "95%",
+                  maxHeight: "80vh",
+                  borderRadius: "12px",
+                  border: "1px solid rgba(255,255,255,0.12)",
+                  boxShadow: "0 12px 64px rgba(0,0,0,0.8)"
+                }}
+                alt="Full Snapshot"
+              />
+              <p style={{ marginTop: "16px", color: "rgba(255,255,255,0.6)", fontSize: "12px", textAlign: "center" }}>
+                Target element snapshot for comment by <strong>{comment.client_name}</strong>
+              </p>
+            </div>
+          )}
+
           {/* Client email */}
-          <a href={`mailto:${comment.client_email}`} className="client-email">
+          <a href={`mailto:${comment.client_email}`} className="client-email" style={{ marginTop: "10px", display: "inline-block" }}>
             {comment.client_email}
           </a>
 

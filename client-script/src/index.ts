@@ -26,6 +26,14 @@ class AnnotateFrame {
   private modal: HTMLElement | null = null
   private comments: any[] = [] // Store loaded comments
 
+  // Element Selection & Screenshot properties
+  private isSelectionMode = false
+  private hoveredEl: HTMLElement | null = null
+  private selectedEl: HTMLElement | null = null
+  private triggerBtn: HTMLElement | null = null
+  private highlightOverlay: HTMLElement | null = null
+  private currentScreenshot: string = ""
+
   constructor() {
     console.log("[AF] Initializing AnnotateFrame...");
     const w = window as any
@@ -35,20 +43,16 @@ class AnnotateFrame {
 
     if (!this.projectId || !this.supabaseUrl || !this.anonKey) {
       console.error("[AF] Missing configuration. Check if the script is properly injected.");
-      console.log("[AF] Debug - Project ID:", this.projectId);
-      console.log("[AF] Debug - Supabase URL:", this.supabaseUrl);
-      console.log("[AF] Debug - Anon Key:", this.anonKey ? "Present (Length: " + this.anonKey.length + ")" : "MISSING");
       return
     }
 
-    console.log("[AF] Debug - Supabase URL:", this.supabaseUrl);
-    console.log("[AF] Debug - Anon Key:", this.anonKey ? this.anonKey.substring(0, 15) + "..." : "MISSING");
     this.init()
   }
 
   private init() {
     console.log("[AF] Script loaded for project:", this.projectId);
-    const token = new URLSearchParams(window.location.search).get("af_token")
+    const params = new URLSearchParams(window.location.search)
+    const token = params.get("af_token")
     if (token) {
       console.log("[AF] af_token detected, validating...");
       this.validateToken(token)
@@ -59,6 +63,11 @@ class AnnotateFrame {
 
     if (localStorage.getItem("af_active") === "true") {
       this.activate()
+      const highlightId = params.get("highlight_id")
+      if (highlightId) {
+        // Delay scroll slightly to ensure page layout is finished
+        setTimeout(() => this.highlightCommentOnLoad(highlightId), 800)
+      }
     }
 
     this.loadExistingPins()
@@ -74,6 +83,11 @@ class AnnotateFrame {
       if (Array.isArray(data) && data.length > 0) {
         localStorage.setItem("af_active", "true")
         this.activate()
+        // Check if there is an active highlight in url too
+        const highlightId = new URLSearchParams(window.location.search).get("highlight_id")
+        if (highlightId) {
+          setTimeout(() => this.highlightCommentOnLoad(highlightId), 800)
+        }
       } else {
         this.showToast("❌ Invalid review link", "#ef4444")
       }
@@ -82,24 +96,127 @@ class AnnotateFrame {
     }
   }
 
+  private loadHtml2Canvas(): Promise<any> {
+    return new Promise((resolve) => {
+      const w = window as any
+      if (w.html2canvas) {
+        resolve(w.html2canvas)
+        return
+      }
+      const script = document.createElement("script")
+      script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"
+      script.onload = () => resolve(w.html2canvas)
+      document.head.appendChild(script)
+    })
+  }
+
   private activate() {
-    this.isActive = true
     this.injectStyles()
-    this.createToolbar()
-    document.body.style.cursor = "crosshair"
-    this.clickHandler = (e: MouseEvent) => this.handleClick(e)
-    document.addEventListener("click", this.clickHandler, true)
-    this.loadExistingPins() // Reload pins when activated
+    this.createTriggerButton()
+    this.loadExistingPins()
   }
 
   private deactivate() {
-    this.isActive = false
+    this.stopSelectionMode()
     localStorage.removeItem("af_active")
+    this.triggerBtn?.remove()
+    document.querySelectorAll(".af-pin").forEach(p => p.remove())
+    if (this.highlightOverlay) this.highlightOverlay.remove()
+  }
+
+  private createTriggerButton() {
+    this.triggerBtn?.remove()
+    const btn = document.createElement("button")
+    btn.id = "af-feedback-trigger"
+    btn.textContent = "Leave Feedback"
+    document.body.appendChild(btn)
+    this.triggerBtn = btn
+    btn.addEventListener("click", (e) => {
+      e.stopPropagation()
+      this.toggleSelectionMode()
+    })
+  }
+
+  private toggleSelectionMode() {
+    if (this.isSelectionMode) {
+      this.stopSelectionMode()
+    } else {
+      this.startSelectionMode()
+    }
+  }
+
+  private startSelectionMode() {
+    this.isSelectionMode = true
+    this.isActive = true
+    this.modal?.remove()
+    
+    this.createToolbar()
+    
+    if (this.triggerBtn) {
+      this.triggerBtn.textContent = "Cancel Selection"
+      this.triggerBtn.style.background = "#ef4444"
+      this.triggerBtn.style.boxShadow = "0 4px 20px rgba(239, 68, 68, 0.4)"
+    }
+    
+    document.body.style.cursor = "crosshair"
+    
+    // Listeners for element selection
+    document.addEventListener("mouseover", this.handleMouseOver, true)
+    document.addEventListener("mouseout", this.handleMouseOut, true)
+    
+    this.clickHandler = (e: MouseEvent) => this.handleClick(e)
+    document.addEventListener("click", this.clickHandler, true)
+  }
+
+  private stopSelectionMode() {
+    this.isSelectionMode = false
+    this.isActive = false
     document.body.style.cursor = ""
     this.toolbar?.remove()
     this.modal?.remove()
+    this.clearHoverHighlight()
+    if (this.selectedEl) {
+      this.selectedEl.classList.remove("af-selected-element")
+      this.selectedEl = null
+    }
+    
+    if (this.triggerBtn) {
+      this.triggerBtn.textContent = "Leave Feedback"
+      this.triggerBtn.style.background = "#8b5cf6"
+      this.triggerBtn.style.boxShadow = "0 4px 20px rgba(139, 92, 246, 0.4)"
+    }
+    
+    document.removeEventListener("mouseover", this.handleMouseOver, true)
+    document.removeEventListener("mouseout", this.handleMouseOut, true)
     if (this.clickHandler) document.removeEventListener("click", this.clickHandler, true)
-    document.querySelectorAll(".af-pin").forEach(p => p.remove())
+  }
+
+  private handleMouseOver = (e: MouseEvent) => {
+    if (!this.isSelectionMode) return
+    const target = e.target as HTMLElement
+    if (
+      target.closest("#af-toolbar") ||
+      target.closest("#af-modal-wrap") ||
+      target.closest(".af-pin") ||
+      target.closest("#af-feedback-trigger") ||
+      target === document.body ||
+      target === document.documentElement
+    ) return
+
+    this.clearHoverHighlight()
+    this.hoveredEl = target
+    target.classList.add("af-hovered-element")
+  }
+
+  private handleMouseOut = (e: MouseEvent) => {
+    this.clearHoverHighlight()
+  }
+
+  private clearHoverHighlight() {
+    if (this.hoveredEl) {
+      this.hoveredEl.classList.remove("af-hovered-element")
+      this.hoveredEl = null
+    }
   }
 
   private injectStyles() {
@@ -107,6 +224,48 @@ class AnnotateFrame {
     const style = document.createElement("style")
     style.id = "af-styles"
     style.textContent = `
+      #af-feedback-trigger {
+        position: fixed; top: 24px; right: 24px; z-index: 2147483647;
+        background: #8b5cf6; color: #fff; padding: 12px 24px;
+        border-radius: 100px; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        font-size: 14px; font-weight: 700; border: none; cursor: pointer;
+        box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4), 0 0 0 1px rgba(255,255,255,0.1) inset;
+        transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+      }
+      #af-feedback-trigger:hover {
+        background: #7c3aed;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 24px rgba(139, 92, 246, 0.5), 0 0 0 1px rgba(255,255,255,0.2) inset;
+      }
+      #af-feedback-trigger:active {
+        transform: translateY(0);
+      }
+
+      .af-hovered-element {
+        outline: 2px dashed #8b5cf6 !important;
+        outline-offset: 2px !important;
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15) !important;
+        cursor: pointer !important;
+      }
+      
+      .af-selected-element {
+        outline: 2px dashed #8b5cf6 !important;
+        outline-offset: 2px !important;
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.3) !important;
+      }
+
+      @keyframes af-pulse-ring {
+        0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+        100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+      }
+      .af-highlight-radar {
+        position: absolute; width: 64px; height: 64px;
+        border: 3px dashed #8b5cf6; border-radius: 50%;
+        z-index: 2147483637; pointer-events: none;
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        animation: af-pulse-ring 2s infinite ease-out;
+      }
+
       #af-toolbar {
         position: fixed; bottom: 24px; right: 24px; z-index: 2147483640;
         display: flex; align-items: center; gap: 10px;
@@ -153,7 +312,7 @@ class AnnotateFrame {
         box-sizing: border-box; outline: none; margin-bottom: 8px;
         transition: border-color 0.2s;
       }
-      .af-field:focus { border-color: #6c63ff; }
+      .af-field:focus { border-color: #8b5cf6; }
       .af-field::placeholder { color: rgba(255,255,255,0.3); }
       .af-textarea { resize: none; }
       
@@ -166,7 +325,7 @@ class AnnotateFrame {
         border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit;
       }
       .af-btn-submit {
-        padding: 7px 16px; background: #6c63ff; border: none;
+        padding: 7px 16px; background: #8b5cf6; border: none;
         color: #fff; border-radius: 8px; cursor: pointer;
         font-size: 13px; font-weight: 600; font-family: inherit;
         transition: opacity 0.2s;
@@ -177,9 +336,9 @@ class AnnotateFrame {
       .af-pin {
         position: absolute;
         width: 24px; height: 24px; border-radius: 50% 50% 50% 0;
-        background: #6c63ff; transform: rotate(-45deg);
+        background: #8b5cf6; transform: rotate(-45deg);
         z-index: 2147483638; cursor: pointer; pointer-events: auto;
-        box-shadow: 0 2px 12px rgba(108,99,255,0.6);
+        box-shadow: 0 2px 12px rgba(139,92,246,0.6);
         animation: af-pin-drop 0.3s cubic-bezier(0.34,1.56,0.64,1);
         transition: transform 0.2s, background 0.2s;
       }
@@ -195,10 +354,10 @@ class AnnotateFrame {
         background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
         padding: 10px; border-radius: 8px;
       }
-      .af-message.agency { background: rgba(108,99,255,0.1); border-color: rgba(108,99,255,0.2); }
+      .af-message.agency { background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.2); }
       .af-msg-header { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
       .af-msg-author { font-weight: 600; color: #e8e8ed; }
-      .af-message.agency .af-msg-author { color: #a5b4fc; }
+      .af-message.agency .af-msg-author { color: #c084fc; }
       .af-msg-body { font-size: 13px; line-height: 1.4; color: rgba(255,255,255,0.85); margin: 0; white-space: pre-wrap; }
 
       .af-toast {
@@ -223,27 +382,60 @@ class AnnotateFrame {
     t.id = "af-toolbar"
     t.innerHTML = `
       <span class="af-pin-icon">📌</span>
-      <span class="af-label">Click anywhere to comment</span>
-      <button id="af-exit-btn">Exit</button>
+      <span class="af-label">Move mouse & click any element to comment</span>
+      <button id="af-exit-btn">Cancel</button>
     `
     document.body.appendChild(t)
     this.toolbar = t
     document.getElementById("af-exit-btn")?.addEventListener("click", e => {
       e.stopPropagation()
-      this.deactivate()
+      this.stopSelectionMode()
     })
   }
 
-  private handleClick(e: MouseEvent) {
-    if (!this.isActive) return
+  private async handleClick(e: MouseEvent) {
+    if (!this.isActive || !this.isSelectionMode) return
     const target = e.target as HTMLElement
-    if (target.closest("#af-toolbar") || target.closest("#af-modal-wrap") || target.closest(".af-pin")) return
+    if (
+      target.closest("#af-toolbar") ||
+      target.closest("#af-modal-wrap") ||
+      target.closest(".af-pin") ||
+      target.closest("#af-feedback-trigger")
+    ) return
 
     e.preventDefault()
     e.stopPropagation()
 
+    // Lock selection outline
+    this.selectedEl = target
+    target.classList.add("af-selected-element")
+
+    // Show instant toast
+    this.showToast("📸 Capturing screenshot...", "#8b5cf6")
+
+    // Capture screenshot
+    let screenshotBase64 = ""
+    try {
+      const h2c = await this.loadHtml2Canvas()
+      const canvas = await h2c(target, {
+        useCORS: true,
+        backgroundColor: null,
+        logging: false
+      })
+      screenshotBase64 = canvas.toDataURL("image/jpeg", 0.6)
+    } catch (err) {
+      console.error("[AF] Screenshot capture failed:", err)
+    }
+
+    this.currentScreenshot = screenshotBase64
+
     const xPct = (e.clientX / window.innerWidth) * 100
     const yPct = ((e.clientY + window.scrollY) / document.documentElement.scrollHeight) * 100
+    
+    // Stop element highlight hover listeners while filling details
+    document.removeEventListener("mouseover", this.handleMouseOver, true)
+    document.removeEventListener("mouseout", this.handleMouseOut, true)
+
     this.showNewCommentModal(xPct, yPct, e.clientX, e.clientY)
   }
 
@@ -251,19 +443,31 @@ class AnnotateFrame {
     this.modal?.remove()
 
     const safeLeft = Math.min(cx + 14, window.innerWidth  - 336)
-    const safeTop  = Math.min(cy + 14, window.innerHeight - 280)
+    const safeTop  = Math.min(cy + 14, window.innerHeight - 340)
 
     const wrap = document.createElement("div")
     wrap.id = "af-modal-wrap"
     wrap.style.left = `${safeLeft}px`
     wrap.style.top  = `${safeTop}px`
     
-    // Auto-fill previous name/email if stored
     const savedName = localStorage.getItem("af_name") || ""
     const savedEmail = localStorage.getItem("af_email") || ""
 
+    const screenshotHtml = this.currentScreenshot 
+      ? `<div style="margin-bottom: 8px;">
+           <span style="font-size: 11px; color: rgba(255,255,255,0.4); display: block; margin-bottom: 4px;">📸 Target Element Snapshot</span>
+           <img src="${this.currentScreenshot}" style="width: 100%; max-height: 80px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(255,255,255,0.12);" />
+         </div>`
+      : "";
+
     wrap.innerHTML = `
-      <h3>📌 Leave a Comment</h3>
+      <h3>
+        <span style="display: flex; align-items: center; gap: 4px;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" class="lucide lucide-pin" style="color: #8b5cf6;"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-.44-1.24l-2.78-3.61A2 2 0 0 1 15 9.17V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4.17a2 2 0 0 1-.78 1.58L5.44 14a2 2 0 0 0-.44 1.24Z"/></svg>
+          Leave Feedback
+        </span>
+      </h3>
+      ${screenshotHtml}
       <input  id="af-name"  class="af-field" placeholder="Your name" value="${savedName}" />
       <input  id="af-email" class="af-field" type="email" placeholder="Your email" value="${savedEmail}" />
       <textarea id="af-body" class="af-field af-textarea" rows="3" placeholder="What would you like to change?"></textarea>
@@ -276,7 +480,10 @@ class AnnotateFrame {
     this.modal = wrap
     ;(document.getElementById("af-body") as HTMLTextAreaElement)?.focus()
 
-    document.getElementById("af-cancel")?.addEventListener("click", () => wrap.remove())
+    document.getElementById("af-cancel")?.addEventListener("click", () => {
+      wrap.remove()
+      this.stopSelectionMode()
+    })
     document.getElementById("af-submit")?.addEventListener("click", () =>
       this.submitComment(xPct, yPct, wrap)
     )
@@ -363,7 +570,7 @@ class AnnotateFrame {
     const btn = document.getElementById("af-submit") as HTMLButtonElement
     btn.disabled = true; btn.textContent = "Sending…"
 
-    const payload: CommentPayload = {
+    const payload: any = {
       project_id:  this.projectId,
       x_percent:   xPct,
       y_percent:   yPct,
@@ -375,8 +582,12 @@ class AnnotateFrame {
       viewport_w:  window.innerWidth,
     }
 
+    if (this.currentScreenshot) {
+      payload.screenshot = this.currentScreenshot
+    }
+
     try {
-      const res = await fetch(`${this.supabaseUrl}/rest/v1/comments`, {
+      let res = await fetch(`${this.supabaseUrl}/rest/v1/comments`, {
         method: "POST",
         headers: {
           apikey: this.anonKey,
@@ -387,6 +598,21 @@ class AnnotateFrame {
         body: JSON.stringify(payload),
       })
 
+      if (!res.ok && payload.screenshot) {
+        console.warn("[AF] Post failed, retrying without screenshot...");
+        delete payload.screenshot
+        res = await fetch(`${this.supabaseUrl}/rest/v1/comments`, {
+          method: "POST",
+          headers: {
+            apikey: this.anonKey,
+            Authorization: `Bearer ${this.anonKey}`,
+            "Content-Type": "application/json",
+            Prefer: "return=representation",
+          },
+          body: JSON.stringify(payload),
+        })
+      }
+
       if (res.ok) {
         const data = await res.json()
         if (data && data[0]) {
@@ -395,6 +621,7 @@ class AnnotateFrame {
           modal.remove()
           this.dropPin(newComment)
           this.showToast("✅ Comment sent!", "#22c55e")
+          this.stopSelectionMode()
         }
       } else {
         this.showToast("❌ Failed to send. Try again.", "#ef4444")
@@ -493,6 +720,41 @@ class AnnotateFrame {
     } catch (e) { 
       console.error("[AF] Failed to load pins", e)
     }
+  }
+
+  private highlightCommentOnLoad(highlightId: string) {
+    const checkExist = setInterval(() => {
+      const comment = this.comments.find(c => c.id === highlightId)
+      if (comment) {
+        clearInterval(checkExist)
+        
+        // Scroll smoothly to pin location
+        const absY = (comment.y_percent / 100) * document.documentElement.scrollHeight
+        const absX = (comment.x_percent / 100) * window.innerWidth
+        
+        window.scrollTo({
+          top: absY - window.innerHeight / 2,
+          left: absX - window.innerWidth / 2,
+          behavior: "smooth"
+        })
+        
+        // Draw pulsing radar rings on the spot to grab client/agency attention!
+        if (this.highlightOverlay) this.highlightOverlay.remove()
+        
+        const radar = document.createElement("div")
+        radar.className = "af-highlight-radar"
+        radar.style.left = `calc(${comment.x_percent}% - 32px)`
+        radar.style.top = `${absY - 32}px`
+        document.body.appendChild(radar)
+        this.highlightOverlay = radar
+        
+        // Clean up radar overlay after 8 seconds
+        setTimeout(() => radar.remove(), 8000)
+      }
+    }, 200)
+
+    // Timeout check after 10 seconds to avoid infinite loop
+    setTimeout(() => clearInterval(checkExist), 10000)
   }
 
   private showToast(msg: string, bg: string) {
