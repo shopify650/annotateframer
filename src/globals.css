@@ -501,6 +501,7 @@ button:disabled {
   transition: border-color 0.15s;
   margin-bottom: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  flex-shrink: 0; /* Prevents flexbox squishing! */
 }
 .comment-card:hover { border-color: var(--border-hi); }
 .comment-card.resolved {
