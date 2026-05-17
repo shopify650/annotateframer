@@ -40,7 +40,7 @@ export function App() {
   if (loading) {
     return (
       <div className="loading-screen">
-        <div className="spinner" />
+        <div className="framer-spinner-large" />
         <p>Loading AnnotateFrame…</p>
       </div>
     )

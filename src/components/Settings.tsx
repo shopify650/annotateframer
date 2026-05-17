@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { framer } from "framer-plugin"
 import { supabase } from "../lib/supabase"
 import type { Project, PlanType } from "../types"
 
@@ -64,7 +65,12 @@ export function Settings({ session, project, plan, onSignOut, onProjectUpdate }:
       .eq("id", project.id)
       .select()
       .single()
-    if (data) onProjectUpdate(data)
+    if (data) {
+      onProjectUpdate(data)
+      framer.notify("Project settings saved!", { variant: "success", durationMs: 2500 })
+    } else {
+      framer.notify("Failed to save settings.", { variant: "error" })
+    }
     setSaving(false)
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)

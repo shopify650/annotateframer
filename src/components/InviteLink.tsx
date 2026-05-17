@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { framer } from "framer-plugin"
 import { supabase } from "../lib/supabase"
 
 interface Props {
@@ -19,6 +20,7 @@ export function InviteLink({ token, projectId, siteUrl }: Props) {
     if (!inviteUrl) return
     navigator.clipboard.writeText(inviteUrl)
     setCopied(true)
+    framer.notify("Review link copied to clipboard!", { variant: "success", durationMs: 2000 })
     setTimeout(() => setCopied(false), 2500)
   }
 

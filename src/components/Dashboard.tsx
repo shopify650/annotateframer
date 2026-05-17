@@ -1,5 +1,6 @@
 import { useEffect, useState, useCallback } from "react"
 import { supabase } from "../lib/supabase"
+import { framer } from "framer-plugin"
 import { injectAnnotateFrameScript, removeAnnotateFrameScript, isScriptInstalled } from "../lib/inject"
 import { CommentThread } from "./CommentThread"
 import { InviteLink } from "./InviteLink"
@@ -87,22 +88,70 @@ export function Dashboard({ session, onSignOut }: Props) {
     return () => { supabase.removeChannel(channel) }
   }, [project, loadComments])
 
+  // Register native Framer Header Menu
+  useEffect(() => {
+    if (!project) return
+    
+    framer.setMenu([
+      {
+        label: "Open Live Site",
+        enabled: !!project.site_url,
+        onAction: () => {
+          if (project.site_url) {
+            window.open(project.site_url.startsWith("http") ? project.site_url : `https://${project.site_url}`, "_blank")
+          }
+        }
+      },
+      {
+        type: "separator"
+      },
+      {
+        label: installed ? "Pause Comments" : "Activate Comments",
+        onAction: () => {
+          if (installed) {
+            handleRemove()
+          } else {
+            handleInstall()
+          }
+        }
+      },
+      {
+        type: "separator"
+      },
+      {
+        label: "Log Out",
+        onAction: onSignOut
+      }
+    ])
+  }, [project, installed, onSignOut])
+
   // ─── Install / remove script ──────────────────────────────────────────────
   async function handleInstall() {
     if (!project) return
     setInstalling(true)
-    await injectAnnotateFrameScript(
-      project.id,
-      import.meta.env.VITE_SUPABASE_URL,
-      import.meta.env.VITE_SUPABASE_ANON_KEY
-    )
-    setInstalled(true)
-    setInstalling(false)
+    try {
+      await injectAnnotateFrameScript(
+        project.id,
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_ANON_KEY
+      )
+      setInstalled(true)
+      framer.notify("AnnotateFrame is now live on your site!", { variant: "success", durationMs: 3000 })
+    } catch (err) {
+      framer.notify("Failed to install script. Try again.", { variant: "error" })
+    } finally {
+      setInstalling(false)
+    }
   }
 
   async function handleRemove() {
-    await removeAnnotateFrameScript()
-    setInstalled(false)
+    try {
+      await removeAnnotateFrameScript()
+      setInstalled(false)
+      framer.notify("Script removed/paused successfully.", { variant: "info", durationMs: 3000 })
+    } catch (err) {
+      framer.notify("Failed to remove script.", { variant: "error" })
+    }
   }
 
   // ─── Resolve comment ──────────────────────────────────────────────────────
@@ -124,7 +173,7 @@ export function Dashboard({ session, onSignOut }: Props) {
   if (loading) {
     return (
       <div className="loading-screen">
-        <div className="spinner" />
+        <div className="framer-spinner-large" />
         <p>Loading your workspace…</p>
       </div>
     )
