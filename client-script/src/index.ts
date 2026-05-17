@@ -271,51 +271,55 @@ class AnnotateFrame {
       #af-toolbar {
         position: fixed; bottom: 24px; right: 24px; z-index: 2147483640;
         display: flex; align-items: center; gap: 10px;
-        background: rgba(15,15,20,0.92); backdrop-filter: blur(12px);
-        color: #e8e8ed; padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        color: #0f172a; padding: 10px 16px;
         border-radius: 100px; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-        font-size: 13px; font-weight: 500;
-        box-shadow: 0 4px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08);
+        font-size: 13px; font-weight: 600;
+        box-shadow: 0 6px 24px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.05);
         user-select: none;
       }
-      #af-toolbar .af-pin-icon { font-size: 16px; }
+      #af-toolbar .af-pin-icon { display: inline-flex; align-items: center; }
       #af-toolbar .af-label    { flex: 1; }
       #af-exit-btn {
-        background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.12);
-        color: #e8e8ed; padding: 4px 10px; border-radius: 100px;
+        background: rgba(0, 0, 0, 0.05); border: 1px solid rgba(0, 0, 0, 0.08);
+        color: #475569; padding: 4px 10px; border-radius: 100px;
         cursor: pointer; font-size: 11px; font-family: inherit;
-        transition: background 0.2s;
+        font-weight: 600; transition: background 0.2s, color 0.2s;
       }
-      #af-exit-btn:hover { background: rgba(255,255,255,0.18); }
+      #af-exit-btn:hover { background: rgba(0, 0, 0, 0.1); color: #0f172a; }
 
       #af-modal-wrap {
         position: fixed; z-index: 2147483641;
-        background: rgba(22,22,28,0.97); backdrop-filter: blur(16px);
-        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 0, 0, 0.08);
         border-radius: 16px; padding: 18px; width: 330px;
-        box-shadow: 0 8px 48px rgba(0,0,0,0.6);
+        box-shadow: 0 10px 40px rgba(15, 23, 42, 0.12);
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
         max-height: 80vh; display: flex; flex-direction: column;
+        color: #0f172a;
       }
       #af-modal-wrap h3 {
-        font-size: 14px; font-weight: 700; color: #e8e8ed; margin: 0 0 12px 0;
+        font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 12px 0;
         display: flex; justify-content: space-between; align-items: center;
       }
       .af-status-pill {
         font-size: 10px; padding: 2px 8px; border-radius: 100px; font-weight: 600; text-transform: uppercase;
+        display: inline-flex; align-items: center; gap: 4px;
       }
-      .af-status-open { background: rgba(245, 158, 11, 0.2); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
-      .af-status-resolved { background: rgba(34, 197, 94, 0.2); color: #86efac; border: 1px solid rgba(34, 197, 94, 0.3); }
+      .af-status-open { background: rgba(245, 158, 11, 0.12); color: #d97706; border: 1px solid rgba(245, 158, 11, 0.25); }
+      .af-status-resolved { background: rgba(22, 163, 74, 0.12); color: #16a34a; border: 1px solid rgba(22, 163, 74, 0.25); }
 
       .af-field {
         width: 100%; padding: 8px 10px;
-        background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-        border-radius: 8px; color: #e8e8ed; font-size: 13px; font-family: inherit;
+        background: rgba(241, 245, 249, 0.7); border: 1px solid rgba(0, 0, 0, 0.08);
+        border-radius: 8px; color: #0f172a; font-size: 13px; font-family: inherit;
         box-sizing: border-box; outline: none; margin-bottom: 8px;
-        transition: border-color 0.2s, box-shadow 0.2s;
+        transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
       }
-      .af-field:focus { border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2); }
-      .af-field::placeholder { color: rgba(255,255,255,0.3); }
+      .af-field:focus { border-color: #8b5cf6; background: #ffffff; box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.15); }
+      .af-field::placeholder { color: rgba(0, 0, 0, 0.4); }
       .af-textarea { resize: none; }
       
       .af-modal-actions {
@@ -323,12 +327,12 @@ class AnnotateFrame {
       }
       .af-btn-cancel, .af-btn-close {
         padding: 7px 14px; background: transparent;
-        border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6);
+        border: 1px solid rgba(0, 0, 0, 0.12); color: #475569;
         border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit;
         transition: background 0.15s, color 0.15s;
       }
       .af-btn-cancel:hover, .af-btn-close:hover {
-        background: rgba(255,255,255,0.05); color: #ffffff;
+        background: rgba(0, 0, 0, 0.04); color: #0f172a;
       }
       .af-btn-submit {
         padding: 7px 16px; background: #8b5cf6; border: none;
@@ -397,14 +401,15 @@ class AnnotateFrame {
       }
       .af-thread-scroll::-webkit-scrollbar { width: 4px; }
       .af-thread-scroll::-webkit-scrollbar-track { background: transparent; }
-      .af-thread-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+      .af-thread-scroll::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.1); border-radius: 4px; }
 
       .af-message {
-        background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
+        background: #ffffff; border: 1px solid rgba(0, 0, 0, 0.05);
         padding: 12px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
       }
       .af-message.agency {
-        background: rgba(139,92,246,0.05); border-color: rgba(139,92,246,0.15);
+        background: rgba(139, 92, 246, 0.04); border-color: rgba(139, 92, 246, 0.15);
       }
       .af-msg-header {
         display: flex; align-items: center; justify-content: space-between; font-size: 11px;
@@ -418,9 +423,9 @@ class AnnotateFrame {
       .af-avatar.agency {
         background: linear-gradient(135deg, #8b5cf6, #b388ff);
       }
-      .af-msg-author { font-weight: 600; color: #ffffff; }
-      .af-message.agency .af-msg-author { color: #d8b4fe; }
-      .af-msg-body { font-size: 12.5px; line-height: 1.45; color: rgba(255,255,255,0.85); margin: 0; white-space: pre-wrap; padding-left: 2px; }
+      .af-msg-author { font-weight: 600; color: #0f172a; }
+      .af-message.agency .af-msg-author { color: #7c3aed; }
+      .af-msg-body { font-size: 12.5px; line-height: 1.45; color: #334155; margin: 0; white-space: pre-wrap; padding-left: 2px; }
 
       .af-toast {
         position: fixed; bottom: 80px; right: 24px; z-index: 2147483645;
