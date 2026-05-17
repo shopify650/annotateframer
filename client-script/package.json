@@ -1,0 +1,12 @@
+{
+  "name": "annotateframe-client",
+  "version": "1.0.0",
+  "scripts": {
+    "build": "npx esbuild src/index.ts --bundle --minify --outfile=build/annotateframe.min.js --platform=browser --target=es2017",
+    "build:dev": "npx esbuild src/index.ts --bundle --outfile=build/annotateframe.dev.js --platform=browser --target=es2017 --sourcemap"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.0",
+    "typescript": "^5.0.0"
+  }
+}
