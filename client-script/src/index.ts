@@ -335,15 +335,18 @@ class AnnotateFrame {
 
       .af-pin {
         position: absolute;
-        width: 24px; height: 24px; border-radius: 50% 50% 50% 0;
-        background: #8b5cf6; transform: rotate(-45deg);
+        width: 26px; height: 26px; border-radius: 50%;
+        background: #8b5cf6; color: #fff; border: 2px solid #fff;
         z-index: 2147483638; cursor: pointer; pointer-events: auto;
-        box-shadow: 0 2px 12px rgba(139,92,246,0.6);
+        box-shadow: 0 2px 10px rgba(139,92,246,0.4);
+        display: flex; align-items: center; justify-content: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+        font-size: 11px; font-weight: 700;
         animation: af-pin-drop 0.3s cubic-bezier(0.34,1.56,0.64,1);
-        transition: transform 0.2s, background 0.2s;
+        transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
       }
-      .af-pin:hover { transform: rotate(-45deg) scale(1.1); }
-      .af-pin.resolved { background: #22c55e; box-shadow: 0 2px 12px rgba(34,197,94,0.6); }
+      .af-pin:hover { transform: scale(1.1); }
+      .af-pin.resolved { background: #22c55e; box-shadow: 0 2px 10px rgba(34,197,94,0.4); }
 
       /* Thread Styles */
       .af-thread-scroll {
@@ -619,7 +622,7 @@ class AnnotateFrame {
           const newComment = { ...data[0], replies: [] }
           this.comments.push(newComment)
           modal.remove()
-          this.dropPin(newComment)
+          this.dropPin(newComment, this.comments.length)
           this.showToast("✅ Comment sent!", "#22c55e")
           this.stopSelectionMode()
         }
@@ -680,11 +683,12 @@ class AnnotateFrame {
     }
   }
 
-  private dropPin(comment: any) {
+  private dropPin(comment: any, index: number) {
     const pin = document.createElement("div")
     pin.className = "af-pin " + (comment.status === 'resolved' ? 'resolved' : '')
+    pin.textContent = String(index)
     const absY = (comment.y_percent / 100) * document.documentElement.scrollHeight
-    pin.style.cssText = "left: calc(" + comment.x_percent + "% - 12px); top: " + (absY - 12) + "px;"
+    pin.style.cssText = "left: calc(" + comment.x_percent + "% - 13px); top: " + (absY - 13) + "px;"
     
     // Add click listener to pin
     pin.addEventListener("click", (e) => {
@@ -715,7 +719,9 @@ class AnnotateFrame {
       const data = await res.json()
       if (Array.isArray(data)) {
         this.comments = data
-        this.comments.forEach((c: any) => this.dropPin(c))
+        // Sort comments chronologically so pin numbers match creation order perfectly
+        this.comments.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+        this.comments.forEach((c: any, index: number) => this.dropPin(c, index + 1))
       }
     } catch (e) { 
       console.error("[AF] Failed to load pins", e)
