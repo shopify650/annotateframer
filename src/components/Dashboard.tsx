@@ -184,7 +184,7 @@ export function Dashboard({ session, onSignOut }: Props) {
       {/* ── Top Header ── */}
       <div className="dash-header">
         <div className="dash-logo">
-          <span className="logo-pin">📌</span>
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pin" style={{ color: "var(--accent)" }}><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-.44-1.24l-2.78-3.61A2 2 0 0 1 15 9.17V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4.17a2 2 0 0 1-.78 1.58L5.44 14a2 2 0 0 0-.44 1.24Z"/></svg>
           <span className="logo-label">AnnotateFrame</span>
         </div>
         <div className="dash-badges">
@@ -197,7 +197,7 @@ export function Dashboard({ session, onSignOut }: Props) {
       {!installed && (
         <div className="install-banner">
           <div className="install-banner-text">
-            <span className="install-icon">⚡</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zap" style={{ color: "var(--accent)", marginTop: "2px" }}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
             <div>
               <strong>Script not installed</strong>
               <p>Inject AnnotateFrame into your live site to start collecting feedback.</p>
@@ -210,8 +210,11 @@ export function Dashboard({ session, onSignOut }: Props) {
       )}
 
       {installed && (
-        <div className="installed-banner">
-          <span>✅ Live on site</span>
+        <div className="installed-banner" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check" style={{ color: "var(--green)" }}><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Live on site</span>
+          </div>
           <button className="btn-ghost btn-xs" onClick={handleRemove}>Pause</button>
         </div>
       )}
@@ -223,10 +226,26 @@ export function Dashboard({ session, onSignOut }: Props) {
             key={t}
             className={`tab-btn ${tab === t ? "active" : ""}`}
             onClick={() => setTab(t)}
+            style={{ display: "inline-flex", alignItems: "center", gap: "4px", justifyContent: "center" }}
           >
-            {t === "comments" && `💬 Comments${openCount > 0 ? ` (${openCount})` : ""}`}
-            {t === "invite" && "🔗 Invite"}
-            {t === "settings" && "⚙️ Settings"}
+            {t === "comments" && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <span>Comments{openCount > 0 ? ` (${openCount})` : ""}</span>
+              </>
+            )}
+            {t === "invite" && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span>Invite</span>
+              </>
+            )}
+            {t === "settings" && (
+              <>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span>Settings</span>
+              </>
+            )}
           </button>
         ))}
       </div>
@@ -252,7 +271,7 @@ export function Dashboard({ session, onSignOut }: Props) {
           {/* Comment list */}
           {displayed.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">🎉</div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check-circle" style={{ color: "var(--green)", marginBottom: "4px" }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
               <p className="empty-title">
                 {filter === "open" ? "No open comments" : `No ${filter} comments`}
               </p>
