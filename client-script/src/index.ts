@@ -443,7 +443,9 @@ class AnnotateFrame {
     const t = document.createElement("div")
     t.id = "af-toolbar"
     t.innerHTML = `
-      <span class="af-pin-icon">📌</span>
+      <span class="af-pin-icon" style="display: inline-flex; align-items: center;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="color: #8b5cf6;"><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-.44-1.24l-2.78-3.61A2 2 0 0 1 15 9.17V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4.17a2 2 0 0 1-.78 1.58L5.44 14a2 2 0 0 0-.44 1.24Z"/></svg>
+      </span>
       <span class="af-label">Move mouse & click any element to comment</span>
       <button id="af-exit-btn">Cancel</button>
     `
@@ -567,8 +569,14 @@ class AnnotateFrame {
     
     const isResolved = comment.status === "resolved"
     const statusPill = isResolved 
-      ? '<span class="af-status-pill af-status-resolved">✅ Resolved</span>'
-      : '<span class="af-status-pill af-status-open">⏳ Open</span>'
+      ? `<span class="af-status-pill af-status-resolved">
+          <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" style="margin-right: 3px;"><polyline points="20 6 9 17 4 12"/></svg>
+          Resolved
+         </span>`
+      : `<span class="af-status-pill af-status-open">
+          <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock" style="margin-right: 3px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Open
+         </span>`
 
     let repliesHtml = ""
     if (comment.replies && comment.replies.length > 0) {
@@ -584,7 +592,7 @@ class AnnotateFrame {
                 <div class="af-avatar ${isAgency ? 'agency' : ''}">${avatarLetter}</div>
                 <div style="display: flex; flex-direction: column;">
                   <span class="af-msg-author">${r.author}</span>
-                  <span style="font-size: 9px; color: rgba(255,255,255,0.4);">${dateStr}</span>
+                  <span style="font-size: 9px; color: #64748b;">${dateStr}</span>
                 </div>
               </div>
             </div>
@@ -620,7 +628,7 @@ class AnnotateFrame {
               <div class="af-avatar">${avatarLetter}</div>
               <div style="display: flex; flex-direction: column;">
                 <span class="af-msg-author">${clientName}</span>
-                <span style="font-size: 9px; color: rgba(255,255,255,0.4);">${dateStr}</span>
+                <span style="font-size: 9px; color: #64748b;">${dateStr}</span>
               </div>
             </div>
           </div>
@@ -938,8 +946,14 @@ class AnnotateFrame {
     if (h3) {
       const isResolved = comment.status === "resolved"
       const statusPill = isResolved 
-        ? '<span class="af-status-pill af-status-resolved">✅ Resolved</span>'
-        : '<span class="af-status-pill af-status-open">⏳ Open</span>'
+        ? `<span class="af-status-pill af-status-resolved">
+            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" style="margin-right: 3px;"><polyline points="20 6 9 17 4 12"/></svg>
+            Resolved
+           </span>`
+        : `<span class="af-status-pill af-status-open">
+            <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-clock" style="margin-right: 3px;"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Open
+           </span>`
       h3.innerHTML = `<span>Thread</span> ${statusPill}`
     }
 
@@ -961,7 +975,7 @@ class AnnotateFrame {
                   <div class="af-avatar ${isAgency ? 'agency' : ''}">${avatarLetter}</div>
                   <div style="display: flex; flex-direction: column;">
                     <span class="af-msg-author">${r.author}</span>
-                    <span style="font-size: 9px; color: rgba(255,255,255,0.4);">${dateStr}</span>
+                    <span style="font-size: 9px; color: #64748b;">${dateStr}</span>
                   </div>
                 </div>
               </div>
@@ -988,7 +1002,7 @@ class AnnotateFrame {
               <div class="af-avatar">${avatarLetter}</div>
               <div style="display: flex; flex-direction: column;">
                 <span class="af-msg-author">${clientName}</span>
-                <span style="font-size: 9px; color: rgba(255,255,255,0.4);">${dateStr}</span>
+                <span style="font-size: 9px; color: #64748b;">${dateStr}</span>
               </div>
             </div>
           </div>
