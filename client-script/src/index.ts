@@ -286,13 +286,11 @@ class AnnotateFrame {
         cursor: pointer; font-size: 11px; font-family: inherit;
         transition: background 0.2s;
       }
-      #af-exit-btn:hover { background: rgba(255,255,255,0.18); }
-
-      #af-modal-wrap {
+      #af-exit-btn:hover { background: rgba(255,255,255,0.18);      #af-modal-wrap {
         position: fixed; z-index: 2147483641;
         background: rgba(22,22,28,0.97); backdrop-filter: blur(16px);
         border: 1px solid rgba(255,255,255,0.08);
-        border-radius: 16px; padding: 18px; width: 320px;
+        border-radius: 16px; padding: 18px; width: 330px;
         box-shadow: 0 8px 48px rgba(0,0,0,0.6);
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
         max-height: 80vh; display: flex; flex-direction: column;
@@ -312,9 +310,9 @@ class AnnotateFrame {
         background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
         border-radius: 8px; color: #e8e8ed; font-size: 13px; font-family: inherit;
         box-sizing: border-box; outline: none; margin-bottom: 8px;
-        transition: border-color 0.2s;
+        transition: border-color 0.2s, box-shadow 0.2s;
       }
-      .af-field:focus { border-color: #8b5cf6; }
+      .af-field:focus { border-color: #8b5cf6; box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2); }
       .af-field::placeholder { color: rgba(255,255,255,0.3); }
       .af-textarea { resize: none; }
       
@@ -325,14 +323,18 @@ class AnnotateFrame {
         padding: 7px 14px; background: transparent;
         border: 1px solid rgba(255,255,255,0.12); color: rgba(255,255,255,0.6);
         border-radius: 8px; cursor: pointer; font-size: 13px; font-family: inherit;
+        transition: background 0.15s, color 0.15s;
+      }
+      .af-btn-cancel:hover, .af-btn-close:hover {
+        background: rgba(255,255,255,0.05); color: #ffffff;
       }
       .af-btn-submit {
         padding: 7px 16px; background: #8b5cf6; border: none;
         color: #fff; border-radius: 8px; cursor: pointer;
         font-size: 13px; font-weight: 600; font-family: inherit;
-        transition: opacity 0.2s;
+        transition: background 0.2s, opacity 0.2s;
       }
-      .af-btn-submit:hover   { opacity: 0.85; }
+      .af-btn-submit:hover   { background: #7c3aed; }
       .af-btn-submit:disabled{ opacity: 0.45; cursor: not-allowed; }
 
       @keyframes af-pin-drop {
@@ -388,17 +390,35 @@ class AnnotateFrame {
       /* Thread Styles */
       .af-thread-scroll {
         overflow-y: auto; padding-right: 4px; margin-bottom: 12px;
-        display: flex; flex-direction: column; gap: 12px;
+        display: flex; flex-direction: column; gap: 10px;
+        max-height: 280px;
       }
+      .af-thread-scroll::-webkit-scrollbar { width: 4px; }
+      .af-thread-scroll::-webkit-scrollbar-track { background: transparent; }
+      .af-thread-scroll::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+
       .af-message {
         background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06);
-        padding: 10px; border-radius: 8px;
+        padding: 12px; border-radius: 10px; display: flex; flex-direction: column; gap: 8px;
       }
-      .af-message.agency { background: rgba(139,92,246,0.1); border-color: rgba(139,92,246,0.2); }
-      .af-msg-header { display: flex; justify-content: space-between; font-size: 11px; color: rgba(255,255,255,0.4); margin-bottom: 4px; }
-      .af-msg-author { font-weight: 600; color: #e8e8ed; }
-      .af-message.agency .af-msg-author { color: #c084fc; }
-      .af-msg-body { font-size: 13px; line-height: 1.4; color: rgba(255,255,255,0.85); margin: 0; white-space: pre-wrap; }
+      .af-message.agency {
+        background: rgba(139,92,246,0.05); border-color: rgba(139,92,246,0.15);
+      }
+      .af-msg-header {
+        display: flex; align-items: center; justify-content: space-between; font-size: 11px;
+      }
+      .af-avatar {
+        width: 24px; height: 24px; border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6, #60a5fa);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 10px; font-weight: 700; color: #fff; flex-shrink: 0;
+      }
+      .af-avatar.agency {
+        background: linear-gradient(135deg, #8b5cf6, #b388ff);
+      }
+      .af-msg-author { font-weight: 600; color: #ffffff; }
+      .af-message.agency .af-msg-author { color: #d8b4fe; }
+      .af-msg-body { font-size: 12.5px; line-height: 1.45; color: rgba(255,255,255,0.85); margin: 0; white-space: pre-wrap; padding-left: 2px; }
 
       .af-toast {
         position: fixed; bottom: 80px; right: 24px; z-index: 2147483645;
@@ -550,14 +570,25 @@ class AnnotateFrame {
 
     let repliesHtml = ""
     if (comment.replies && comment.replies.length > 0) {
-      repliesHtml = comment.replies.map((r: any) => {
-        return '<div class="af-message ' + (r.author === 'Agency' ? 'agency' : '') + '">' +
-          '<div class="af-msg-header">' +
-            '<span class="af-msg-author">' + r.author + '</span>' +
-            '<span>' + new Date(r.created_at).toLocaleDateString() + '</span>' +
-          '</div>' +
-          '<p class="af-msg-body">' + r.body + '</p>' +
-        '</div>';
+      const sortedReplies = [...comment.replies].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+      repliesHtml = sortedReplies.map((r: any) => {
+        const isAgency = r.author === 'Agency'
+        const avatarLetter = r.author.charAt(0).toUpperCase()
+        const dateStr = new Date(r.created_at).toLocaleDateString()
+        return `
+          <div class="af-message ${isAgency ? 'agency' : ''}">
+            <div class="af-msg-header">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="af-avatar ${isAgency ? 'agency' : ''}">${avatarLetter}</div>
+                <div style="display: flex; flex-direction: column;">
+                  <span class="af-msg-author">${r.author}</span>
+                  <span style="font-size: 9px; color: rgba(255,255,255,0.4);">${dateStr}</span>
+                </div>
+              </div>
+            </div>
+            <p class="af-msg-body">${r.body}</p>
+          </div>
+        `
       }).join("")
     }
 
@@ -570,6 +601,10 @@ class AnnotateFrame {
          </div>`
       : "";
 
+    const clientName = comment.client_name || "Client"
+    const avatarLetter = clientName.charAt(0).toUpperCase()
+    const dateStr = new Date(comment.created_at).toLocaleDateString()
+
     wrap.innerHTML = `
       <h3>
         <span>Thread</span>
@@ -579,8 +614,13 @@ class AnnotateFrame {
       <div class="af-thread-scroll">
         <div class="af-message">
           <div class="af-msg-header">
-            <span class="af-msg-author">${comment.client_name}</span>
-            <span>${new Date(comment.created_at).toLocaleDateString()}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="af-avatar">${avatarLetter}</div>
+              <div style="display: flex; flex-direction: column;">
+                <span class="af-msg-author">${clientName}</span>
+                <span style="font-size: 9px; color: rgba(255,255,255,0.4);">${dateStr}</span>
+              </div>
+            </div>
           </div>
           <p class="af-msg-body">${comment.body}</p>
           ${screenshotHtml}
@@ -909,13 +949,23 @@ class AnnotateFrame {
         // Sort replies chronologically
         const sorted = [...comment.replies].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         repliesHtml = sorted.map((r: any) => {
-          return '<div class="af-message ' + (r.author === 'Agency' ? 'agency' : '') + '">' +
-            '<div class="af-msg-header">' +
-              '<span class="af-msg-author">' + r.author + '</span>' +
-              '<span>' + new Date(r.created_at).toLocaleDateString() + '</span>' +
-            '</div>' +
-            '<p class="af-msg-body">' + r.body + '</p>' +
-          '</div>';
+          const isAgency = r.author === 'Agency'
+          const avatarLetter = r.author.charAt(0).toUpperCase()
+          const dateStr = new Date(r.created_at).toLocaleDateString()
+          return `
+            <div class="af-message ${isAgency ? 'agency' : ''}">
+              <div class="af-msg-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <div class="af-avatar ${isAgency ? 'agency' : ''}">${avatarLetter}</div>
+                  <div style="display: flex; flex-direction: column;">
+                    <span class="af-msg-author">${r.author}</span>
+                    <span style="font-size: 9px; color: rgba(255,255,255,0.4);">${dateStr}</span>
+                  </div>
+                </div>
+              </div>
+              <p class="af-msg-body">${r.body}</p>
+            </div>
+          `
         }).join("")
       }
 
@@ -925,11 +975,20 @@ class AnnotateFrame {
            </div>`
         : "";
 
+      const clientName = comment.client_name || "Client"
+      const avatarLetter = clientName.charAt(0).toUpperCase()
+      const dateStr = new Date(comment.created_at).toLocaleDateString()
+
       scrollContainer.innerHTML = `
         <div class="af-message">
           <div class="af-msg-header">
-            <span class="af-msg-author">${comment.client_name}</span>
-            <span>${new Date(comment.created_at).toLocaleDateString()}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="af-avatar">${avatarLetter}</div>
+              <div style="display: flex; flex-direction: column;">
+                <span class="af-msg-author">${clientName}</span>
+                <span style="font-size: 9px; color: rgba(255,255,255,0.4);">${dateStr}</span>
+              </div>
+            </div>
           </div>
           <p class="af-msg-body">${comment.body}</p>
           ${screenshotHtml}
