@@ -98,26 +98,6 @@ export function Settings({
 
   return (
     <div className="settings-panel">
-      {/* Workspace Switcher */}
-      {projects.length > 1 && (
-        <section className="settings-section">
-          <h4 className="settings-section-title">Active Project Workspace</h4>
-          <div className="field-group">
-            <select
-              className="field-input"
-              value={project?.id ?? ""}
-              onChange={(e) => {
-                const selected = projects.find(p => p.id === e.target.value)
-                if (selected) onSelectProject(selected)
-              }}
-            >
-              {projects.map(p => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
-          </div>
-        </section>
-      )}
 
       {/* Account Section */}
       <section className="settings-section">

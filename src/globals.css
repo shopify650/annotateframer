@@ -819,3 +819,11 @@ button:disabled {
 .bottom-nav-btn.active svg {
   transform: scale(1.1);
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

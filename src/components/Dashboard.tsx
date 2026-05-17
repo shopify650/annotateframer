@@ -234,22 +234,121 @@ export function Dashboard({ session, onSignOut }: Props) {
               </div>
             </div>
 
-            {/* Mesh Gradient Project Card */}
-            {project && (
-              <div className="project-card" onClick={() => {
-                const baseUrl = project.site_url ? (project.site_url.startsWith("http") ? project.site_url : `https://${project.site_url}`) : ""
-                if (baseUrl) {
-                  const reviewUrl = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}af_token=${project.invite_token}`
-                  window.open(reviewUrl, "_blank")
-                } else {
-                  framer.notify("Please configure your Site URL in Settings first to open the feedback live chats!", { variant: "info" })
-                }
-              }}>
-                <span className="project-card-title">{project.name}</span>
-                <span className="project-card-url">{project.site_url || "clientflow.framer.website"}</span>
-                {openCount > 0 && <span className="project-card-badge">{openCount}</span>}
-              </div>
-            )}
+            {/* Horizontal Projects Carousel / Card List */}
+            <div style={{
+              display: "flex",
+              gap: "8px",
+              padding: "0 12px 10px",
+              overflowX: "auto",
+              flexShrink: 0,
+              scrollbarWidth: "none"
+            }} className="no-scrollbar">
+              {projects.map(p => {
+                const isActive = project?.id === p.id
+                const baseUrl = p.site_url ? (p.site_url.startsWith("http") ? p.site_url : `https://${p.site_url}`) : ""
+                const reviewUrl = baseUrl ? `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}af_token=${p.invite_token}` : ""
+
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => setProject(p)}
+                    style={{
+                      flex: "0 0 160px",
+                      background: isActive ? "linear-gradient(135deg, #09090b, var(--surface))" : "var(--surface)",
+                      border: isActive ? "1.5px solid var(--accent)" : "1px solid var(--border)",
+                      borderRadius: "12px",
+                      padding: "10px 12px",
+                      cursor: "pointer",
+                      display: "flex",
+                      flexDirection: "column",
+                      justifyContent: "space-between",
+                      height: "76px",
+                      position: "relative",
+                      transition: "all 0.2s",
+                      boxShadow: isActive ? "0 4px 12px rgba(0, 122, 255, 0.15)" : "none",
+                      overflow: "hidden"
+                    }}
+                    className={`project-carousel-card ${isActive ? "active" : ""}`}
+                  >
+                    {/* Gradient overlay for active project cards */}
+                    {isActive && (
+                      <div style={{
+                        position: "absolute",
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        background: "linear-gradient(135deg, rgba(139, 92, 246, 0.08), rgba(0, 122, 255, 0.08))",
+                        pointerEvents: "none"
+                      }} />
+                    )}
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", width: "100%", zIndex: 1 }}>
+                      <span style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: isActive ? "var(--text)" : "var(--text-sub)",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        maxWidth: "105px"
+                      }}>
+                        {p.name}
+                      </span>
+                      
+                      {/* Live review shortcut button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation() // Don't trigger project switch
+                          if (reviewUrl) {
+                            window.open(reviewUrl, "_blank")
+                          } else {
+                            framer.notify("Please configure your Site URL in Settings first to open the review live chats!", { variant: "info" })
+                          }
+                        }}
+                        style={{
+                          background: isActive ? "var(--accent)" : "var(--surface2)",
+                          border: "none",
+                          borderRadius: "6px",
+                          width: "20px",
+                          height: "20px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: isActive ? "#fff" : "var(--text-sub)",
+                          cursor: "pointer",
+                          transition: "all 0.2s",
+                          zIndex: 2
+                        }}
+                        title="Open Live Chat Feedback"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                      </button>
+                    </div>
+
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", zIndex: 1 }}>
+                      <span style={{
+                        fontSize: "8.5px",
+                        color: "var(--text-sub)",
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        maxWidth: "110px"
+                      }}>
+                        {p.site_url || "Configure URL"}
+                      </span>
+                      {/* Active indicator dot */}
+                      {isActive && (
+                        <span style={{
+                          width: "5px",
+                          height: "5px",
+                          borderRadius: "50%",
+                          background: "var(--accent)",
+                          boxShadow: "0 0 8px var(--accent)"
+                        }} />
+                      )}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
 
             {/* Install Banner */}
             {!installed && (
