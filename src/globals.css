@@ -81,20 +81,7 @@ body.framer-theme-dark,
   --accent-dark: #6d28d9;
 }
 
-/* Canvas Native CSS Color Variable Inject Overrides */
-@supports (background: var(--framer-color-bg)) {
-  :root {
-    --bg:         var(--framer-color-bg);
-    --surface:    var(--framer-color-bg-secondary);
-    --surface2:   var(--framer-color-bg-tertiary);
-    --border:     var(--framer-color-divider);
-    --text:       var(--framer-color-text);
-    --text-sub:   var(--framer-color-text-secondary);
-    --accent:     var(--framer-color-tint);
-    --accent-dim: var(--framer-color-tint-dimmed);
-    --accent-dark: var(--framer-color-tint-dark);
-  }
-}
+
 
 html, body, #root {
   height: 100%;
@@ -116,8 +103,8 @@ html, body, #root {
 input, textarea, select {
   font-family: inherit;
   font-size: 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--surface2);
+  border: 1px solid var(--border-hi);
   border-radius: var(--radius);
   color: var(--text);
   padding: 6px 8px;
@@ -127,9 +114,11 @@ input, textarea, select {
 input:focus, textarea:focus, select:focus {
   border-color: var(--accent);
   box-shadow: 0 0 0 1.5px var(--accent-dim);
+  background: var(--bg);
 }
 input::placeholder, textarea::placeholder {
   color: var(--text-sub);
+  opacity: 0.85;
 }
 
 hr, .framer-divider {
