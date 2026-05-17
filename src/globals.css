@@ -8,29 +8,92 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Framer Semantic Theme Tokens */
-  --bg:         var(--framer-color-bg, #1e1e1e);
-  --surface:    var(--framer-color-bg-secondary, #2a2a2a);
-  --surface2:   var(--framer-color-bg-tertiary, #3a3a3a);
-  --border:     var(--framer-color-divider, rgba(255, 255, 255, 0.08));
-  --border-hi:  var(--framer-color-divider, rgba(255, 255, 255, 0.15));
-  --text:       var(--framer-color-text, #f3f3f3);
-  --text-sub:   var(--framer-color-text-secondary, #999999);
-  --accent:     var(--framer-color-tint, #007aff);
-  --accent-dim: var(--framer-color-tint-dimmed, rgba(0, 122, 255, 0.15));
-  --accent-dark: var(--framer-color-tint-dark, #0056b3);
+  /* Default Dark Mode (if no custom variables or light theme are active) */
+  --bg:         #0c0c0f;
+  --surface:    #161620;
+  --surface2:   #1f1f2e;
+  --border:     rgba(255, 255, 255, 0.08);
+  --border-hi:  rgba(255, 255, 255, 0.14);
+  --text:       #f5f5f7;
+  --text-sub:   #8a8a93;
+  --accent:     #8b5cf6;
+  --accent-dim: rgba(139, 92, 246, 0.15);
+  --accent-dark: #6d28d9;
   
   /* System States */
-  --green:      #34c759;
-  --green-dim:  rgba(52, 199, 89, 0.15);
-  --red:        #ff3b30;
-  --red-dim:    rgba(255, 59, 48, 0.15);
-  --yellow:     #ff9500;
-  --yellow-dim: rgba(255, 149, 0, 0.15);
+  --green:      #22c55e;
+  --green-dim:  rgba(34, 197, 94, 0.15);
+  --red:        #ef4444;
+  --red-dim:    rgba(239, 68, 68, 0.15);
+  --yellow:     #f59e0b;
+  --yellow-dim: rgba(245, 158, 11, 0.15);
   
-  --radius:     6px;
-  --radius-lg:  8px;
-  --font:       -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+  --radius:     8px;
+  --radius-lg:  12px;
+  --font:       "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Light Mode Overrides */
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg:         #ffffff;
+    --surface:    #f8fafc;
+    --surface2:   #f1f5f9;
+    --border:     rgba(0, 0, 0, 0.07);
+    --border-hi:  rgba(0, 0, 0, 0.13);
+    --text:       #0f172a;
+    --text-sub:   #64748b;
+    --accent:     #8b5cf6;
+    --accent-dim: rgba(139, 92, 246, 0.1);
+    --accent-dark: #7c3aed;
+  }
+}
+
+/* Explicit Light Theme Trigger Hooks */
+html[data-framer-theme="light"],
+body.framer-theme-light,
+.framer-theme-light {
+  --bg:         #ffffff;
+  --surface:    #f8fafc;
+  --surface2:   #f1f5f9;
+  --border:     rgba(0, 0, 0, 0.07);
+  --border-hi:  rgba(0, 0, 0, 0.13);
+  --text:       #0f172a;
+  --text-sub:   #64748b;
+  --accent:     #8b5cf6;
+  --accent-dim: rgba(139, 92, 246, 0.1);
+  --accent-dark: #7c3aed;
+}
+
+/* Explicit Dark Theme Trigger Hooks */
+html[data-framer-theme="dark"],
+body.framer-theme-dark,
+.framer-theme-dark {
+  --bg:         #0c0c0f;
+  --surface:    #161620;
+  --surface2:   #1f1f2e;
+  --border:     rgba(255, 255, 255, 0.08);
+  --border-hi:  rgba(255, 255, 255, 0.14);
+  --text:       #f5f5f7;
+  --text-sub:   #8a8a93;
+  --accent:     #8b5cf6;
+  --accent-dim: rgba(139, 92, 246, 0.15);
+  --accent-dark: #6d28d9;
+}
+
+/* Canvas Native CSS Color Variable Inject Overrides */
+@supports (background: var(--framer-color-bg)) {
+  :root {
+    --bg:         var(--framer-color-bg);
+    --surface:    var(--framer-color-bg-secondary);
+    --surface2:   var(--framer-color-bg-tertiary);
+    --border:     var(--framer-color-divider);
+    --text:       var(--framer-color-text);
+    --text-sub:   var(--framer-color-text-secondary);
+    --accent:     var(--framer-color-tint);
+    --accent-dim: var(--framer-color-tint-dimmed);
+    --accent-dark: var(--framer-color-tint-dark);
+  }
 }
 
 html, body, #root {
