@@ -335,18 +335,28 @@ class AnnotateFrame {
 
       .af-pin {
         position: absolute;
-        width: 26px; height: 26px; border-radius: 50%;
-        background: #8b5cf6; color: #fff; border: 2px solid #fff;
+        width: 28px; height: 28px; border-radius: 50%;
+        background: linear-gradient(135deg, #a78bfa 0%, #7c3aed 100%);
+        color: #ffffff; border: 2.5px solid #ffffff;
         z-index: 2147483638; cursor: pointer; pointer-events: auto;
-        box-shadow: 0 2px 10px rgba(139,92,246,0.4);
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.45), inset 0 2px 4px rgba(255,255,255,0.3);
         display: flex; align-items: center; justify-content: center;
         font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
-        font-size: 11px; font-weight: 700;
+        font-size: 11px; font-weight: 800;
         animation: af-pin-drop 0.3s cubic-bezier(0.34,1.56,0.64,1);
-        transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
+        transition: transform 0.2s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.2s;
       }
-      .af-pin:hover { transform: scale(1.1); }
-      .af-pin.resolved { background: #22c55e; box-shadow: 0 2px 10px rgba(34,197,94,0.4); }
+      .af-pin:hover {
+        transform: scale(1.15) translateY(-2px);
+        box-shadow: 0 8px 24px rgba(124, 58, 237, 0.6), inset 0 2px 4px rgba(255,255,255,0.3);
+      }
+      .af-pin.resolved {
+        background: linear-gradient(135deg, #34d399 0%, #059669 100%);
+        box-shadow: 0 4px 20px rgba(5, 150, 105, 0.45), inset 0 2px 4px rgba(255,255,255,0.3);
+      }
+      .af-pin.resolved:hover {
+        box-shadow: 0 8px 24px rgba(5, 150, 105, 0.6), inset 0 2px 4px rgba(255,255,255,0.3);
+      }
 
       /* Thread Styles */
       .af-thread-scroll {
@@ -526,6 +536,12 @@ class AnnotateFrame {
     const replyInputHtml = !isResolved ? '<textarea id="af-reply-body" class="af-field af-textarea" rows="2" placeholder="Write a reply..."></textarea>' : '';
     const replyBtnHtml = !isResolved ? '<button class="af-btn-submit" id="af-send-reply">Reply →</button>' : '';
 
+    const screenshotHtml = comment.screenshot
+      ? `<div style="margin-top: 8px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);">
+           <img src="${comment.screenshot}" style="width: 100%; max-height: 90px; object-fit: cover; display: block;" />
+         </div>`
+      : "";
+
     wrap.innerHTML = `
       <h3>
         <span>Thread</span>
@@ -539,6 +555,7 @@ class AnnotateFrame {
             <span>${new Date(comment.created_at).toLocaleDateString()}</span>
           </div>
           <p class="af-msg-body">${comment.body}</p>
+          ${screenshotHtml}
         </div>
         ${repliesHtml}
       </div>
@@ -688,7 +705,7 @@ class AnnotateFrame {
     pin.className = "af-pin " + (comment.status === 'resolved' ? 'resolved' : '')
     pin.textContent = String(index)
     const absY = (comment.y_percent / 100) * document.documentElement.scrollHeight
-    pin.style.cssText = "left: calc(" + comment.x_percent + "% - 13px); top: " + (absY - 13) + "px;"
+    pin.style.cssText = "left: calc(" + comment.x_percent + "% - 14px); top: " + (absY - 14) + "px;"
     
     // Add click listener to pin
     pin.addEventListener("click", (e) => {
