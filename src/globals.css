@@ -499,9 +499,15 @@ button:disabled {
   border-radius: var(--radius);
   overflow: hidden;
   transition: border-color 0.15s;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 .comment-card:hover { border-color: var(--border-hi); }
-.comment-card.resolved { opacity: 0.6; }
+.comment-card.resolved {
+  opacity: 0.85;
+  border-color: rgba(52, 199, 89, 0.25);
+  background: rgba(52, 199, 89, 0.02);
+}
 
 .comment-header {
   display: flex;

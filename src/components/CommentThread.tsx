@@ -12,7 +12,7 @@ interface Props {
 export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Props) {
   const [reply, setReply] = useState("")
   const [sending, setSending] = useState(false)
-  const [expanded, setExpanded] = useState(true)
+  const [expanded, setExpanded] = useState(comment.status !== "resolved")
   const [lightboxOpen, setLightboxOpen] = useState(false)
 
   const timeAgo = (date: string) => {
@@ -47,7 +47,11 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
   return (
     <div className={`comment-card ${comment.status}`}>
       {/* Header Row */}
-      <div className="comment-header" onClick={() => setExpanded(p => !p)} style={{ cursor: "pointer" }}>
+      <div
+        className="comment-header"
+        onClick={() => setExpanded(p => !p)}
+        style={{ cursor: "pointer", borderBottom: expanded ? "1px solid var(--border)" : "none" }}
+      >
         <div className="comment-header-left">
           <div className="avatar">{comment.client_name.charAt(0).toUpperCase()}</div>
           <div className="comment-meta">

@@ -57,12 +57,12 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
   free: {
-    maxProjects: 1,
-    maxComments: 10,
-    emailNotifications: false,
-    replies: false,
-    whiteLabelModal: false,
-    teamSeats: 1,
+    maxProjects: Infinity,
+    maxComments: Infinity,
+    emailNotifications: true,
+    replies: true,
+    whiteLabelModal: true,
+    teamSeats: 99,
   },
   pro: {
     maxProjects: Infinity,
