@@ -730,14 +730,14 @@ button:disabled {
   position: relative;
   background: linear-gradient(135deg, #0f0c1b 0%, #171030 50%, #0d1e3d 100%);
   border: 1.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 20px;
-  padding: 24px 20px;
-  margin: 8px 12px 14px;
+  border-radius: 14px;
+  padding: 16px 14px;
+  margin: 8px 12px 12px;
   overflow: hidden;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   cursor: pointer;
   transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s;
 }

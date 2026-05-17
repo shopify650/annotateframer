@@ -297,17 +297,17 @@ export function Dashboard({ session, onSignOut }: Props) {
                   </button>
                 </div>
 
-                <div style={{ marginTop: "14px", cursor: "pointer" }} onClick={() => {
+                <div style={{ marginTop: "10px", cursor: "pointer" }} onClick={() => {
                   const baseUrl = project.site_url ? (project.site_url.startsWith("http") ? project.site_url : `https://${project.site_url}`) : ""
                   if (baseUrl) {
                     const reviewUrl = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}af_token=${project.invite_token}`
                     window.open(reviewUrl, "_blank")
                   }
                 }}>
-                  <span className="project-card-title" style={{ display: "block", fontSize: "16px", fontWeight: "800", color: "#fff", letterSpacing: "-0.4px" }}>
+                  <span className="project-card-title" style={{ display: "block", fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.4px" }}>
                     {project.name}
                   </span>
-                  <span className="project-card-url" style={{ display: "block", marginTop: "4px", fontSize: "10.5px", opacity: 0.8, color: "rgba(255, 255, 255, 0.75)" }}>
+                  <span className="project-card-url" style={{ display: "block", marginTop: "3px", fontSize: "9.5px", opacity: 0.8, color: "rgba(255, 255, 255, 0.72)" }}>
                     {project.site_url || "clientflow.framer.website"}
                   </span>
                 </div>
