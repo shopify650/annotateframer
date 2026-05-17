@@ -286,7 +286,9 @@ class AnnotateFrame {
         cursor: pointer; font-size: 11px; font-family: inherit;
         transition: background 0.2s;
       }
-      #af-exit-btn:hover { background: rgba(255,255,255,0.18);      #af-modal-wrap {
+      #af-exit-btn:hover { background: rgba(255,255,255,0.18); }
+
+      #af-modal-wrap {
         position: fixed; z-index: 2147483641;
         background: rgba(22,22,28,0.97); backdrop-filter: blur(16px);
         border: 1px solid rgba(255,255,255,0.08);
