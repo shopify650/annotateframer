@@ -23,6 +23,10 @@ export function Dashboard({ session, onSignOut }: Props) {
   const plan: PlanType = session?.user?.email === "xavelop375@esyline.com" ? "agency" : "free"
   const [loading, setLoading] = useState(true)
 
+  // Project Creation Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [newProjectName, setNewProjectName] = useState("")
+
   // Load project list & install status
   useEffect(() => {
     loadOrCreateProject()
@@ -61,14 +65,13 @@ export function Dashboard({ session, onSignOut }: Props) {
 
   // Create new project
   async function handleCreateProject() {
-    const name = prompt("Enter new project name:", "New Project")
-    if (!name || !name.trim()) return
+    if (!newProjectName.trim()) return
 
     setLoading(true)
     try {
       const { data: created, error } = await supabase
         .from("projects")
-        .insert({ user_id: session.user.id, name: name.trim() })
+        .insert({ user_id: session.user.id, name: newProjectName.trim() })
         .select()
         .single()
 
@@ -76,6 +79,8 @@ export function Dashboard({ session, onSignOut }: Props) {
       if (created) {
         setProjects(prev => [created, ...prev])
         setProject(created)
+        setShowCreateModal(false)
+        setNewProjectName("")
         framer.notify(`Project "${created.name}" created!`, { variant: "success", durationMs: 3000 })
       }
     } catch (err) {
@@ -221,7 +226,7 @@ export function Dashboard({ session, onSignOut }: Props) {
                   strokeLinejoin="round"
                   style={{ cursor: "pointer", transition: "color 0.2s" }}
                   className="add-project-icon"
-                  onClick={handleCreateProject}
+                  onClick={() => setShowCreateModal(true)}
                 >
                   <line x1="12" x2="12" y1="5" y2="19"/>
                   <line x1="5" x2="19" y1="12" y2="12"/>
@@ -365,6 +370,68 @@ export function Dashboard({ session, onSignOut }: Props) {
         )}
 
       </div>
+
+      {/* Dynamic Inline Project Creation Modal overlay */}
+      {showCreateModal && (
+        <div style={{
+          position: "fixed",
+          top: 0, left: 0, right: 0, bottom: 0,
+          background: "rgba(10, 10, 12, 0.8)",
+          backdropFilter: "blur(12px)",
+          zIndex: 2147483647,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "16px"
+        }}>
+          <div style={{
+            background: "var(--surface)",
+            border: "1px solid var(--border)",
+            borderRadius: "16px",
+            padding: "20px",
+            width: "100%",
+            maxWidth: "280px",
+            boxShadow: "0 12px 48px rgba(0,0,0,0.5)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "12px"
+          }}>
+            <span style={{ fontSize: "14px", fontWeight: "700", color: "var(--text)" }}>Create New Project</span>
+            <input
+              type="text"
+              className="field-input"
+              value={newProjectName}
+              onChange={e => setNewProjectName(e.target.value)}
+              placeholder="e.g. Agency Website"
+              style={{ width: "100%", padding: "8px 12px", fontSize: "12px", background: "var(--surface2)", border: "1px solid var(--border)", borderRadius: "8px", color: "var(--text)", outline: "none" }}
+              autoFocus
+              onKeyDown={e => {
+                if (e.key === "Enter") handleCreateProject()
+              }}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "8px", marginTop: "4px" }}>
+              <button
+                className="btn-ghost"
+                style={{ padding: "6px 12px", fontSize: "11px" }}
+                onClick={() => {
+                  setShowCreateModal(false)
+                  setNewProjectName("")
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="btn-primary"
+                style={{ padding: "6px 14px", fontSize: "11px" }}
+                onClick={handleCreateProject}
+                disabled={!newProjectName.trim()}
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Bottom Custom Tabs Navigation Bar ── */}
       <div className="bottom-nav">
