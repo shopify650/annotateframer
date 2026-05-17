@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { framer } from "framer-plugin"
 import { supabase } from "../lib/supabase"
 import type { Project, PlanType } from "../types"
@@ -6,9 +6,11 @@ import type { Project, PlanType } from "../types"
 interface Props {
   session: any
   project: Project | null
+  projects: Project[]
   plan: PlanType
   onSignOut: () => void
   onProjectUpdate: (p: Project) => void
+  onSelectProject: (p: Project) => void
 }
 
 const PLANS = [
@@ -50,11 +52,25 @@ const PLANS = [
   },
 ]
 
-export function Settings({ session, project, plan, onSignOut, onProjectUpdate }: Props) {
+export function Settings({
+  session,
+  project,
+  projects,
+  plan,
+  onSignOut,
+  onProjectUpdate,
+  onSelectProject
+}: Props) {
   const [siteName, setSiteName] = useState(project?.name ?? "")
   const [siteUrl, setSiteUrl] = useState(project?.site_url ?? "")
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+
+  // Sync state if active project changes
+  useEffect(() => {
+    setSiteName(project?.name ?? "")
+    setSiteUrl(project?.site_url ?? "")
+  }, [project])
 
   async function saveProject() {
     if (!project) return
@@ -82,6 +98,27 @@ export function Settings({ session, project, plan, onSignOut, onProjectUpdate }:
 
   return (
     <div className="settings-panel">
+      {/* Workspace Switcher */}
+      {projects.length > 1 && (
+        <section className="settings-section">
+          <h4 className="settings-section-title">Active Project Workspace</h4>
+          <div className="field-group">
+            <select
+              className="field-input"
+              value={project?.id ?? ""}
+              onChange={(e) => {
+                const selected = projects.find(p => p.id === e.target.value)
+                if (selected) onSelectProject(selected)
+              }}
+            >
+              {projects.map(p => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+          </div>
+        </section>
+      )}
+
       {/* Account Section */}
       <section className="settings-section">
         <h4 className="settings-section-title">Account</h4>
