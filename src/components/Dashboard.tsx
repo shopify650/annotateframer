@@ -20,7 +20,7 @@ export function Dashboard({ session, onSignOut }: Props) {
   const [installing, setInstalling] = useState(false)
   const [tab, setTab] = useState<TabType>("projects")
   const [filter, setFilter] = useState<"open" | "resolved" | "all">("open")
-  const [plan] = useState<PlanType>("free")
+  const plan: PlanType = session?.user?.email === "xavelop375@esyline.com" ? "agency" : "free"
   const [loading, setLoading] = useState(true)
 
   // Load project list & install status
@@ -232,8 +232,12 @@ export function Dashboard({ session, onSignOut }: Props) {
             {/* Mesh Gradient Project Card */}
             {project && (
               <div className="project-card" onClick={() => {
-                if (project.site_url) {
-                  window.open(project.site_url.startsWith("http") ? project.site_url : `https://${project.site_url}`, "_blank")
+                const baseUrl = project.site_url ? (project.site_url.startsWith("http") ? project.site_url : `https://${project.site_url}`) : ""
+                if (baseUrl) {
+                  const reviewUrl = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}af_token=${project.invite_token}`
+                  window.open(reviewUrl, "_blank")
+                } else {
+                  framer.notify("Please configure your Site URL in Settings first to open the feedback live chats!", { variant: "info" })
                 }
               }}>
                 <span className="project-card-title">{project.name}</span>
