@@ -715,3 +715,100 @@ button:disabled {
   border-radius: var(--radius);
   font-size: 11px; font-weight: 600;
 }
+
+/* ─────────────────────────────────────────────
+   CLIENTFLOW PREMIUM STYLES
+   ───────────────────────────────────────────── */
+.project-card {
+  position: relative;
+  background: linear-gradient(135deg, #0f0c1b 0%, #171030 50%, #0d1e3d 100%);
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 24px 20px;
+  margin: 8px 12px 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s;
+}
+.project-card::before {
+  content: "";
+  position: absolute;
+  top: -50%; left: -50%; width: 200%; height: 200%;
+  background: radial-gradient(circle at 75% 25%, rgba(139, 92, 246, 0.28) 0%, transparent 45%),
+              radial-gradient(circle at 25% 75%, rgba(59, 130, 246, 0.22) 0%, transparent 45%),
+              radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.08) 0%, transparent 40%);
+  pointer-events: none;
+}
+.project-card:hover {
+  transform: scale(1.02) translateY(-2px);
+  border-color: rgba(139, 92, 246, 0.45);
+}
+.project-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  z-index: 2;
+  letter-spacing: -0.3px;
+}
+.project-card-url {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.5);
+  z-index: 2;
+}
+.project-card-badge {
+  position: absolute;
+  top: 18px; right: 18px;
+  width: 24px; height: 24px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2;
+}
+
+/* Bottom Nav bar */
+.bottom-nav {
+  display: flex;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  padding: 6px 12px 10px;
+  flex-shrink: 0;
+  gap: 12px;
+}
+.bottom-nav-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  background: transparent;
+  border: none;
+  color: var(--text-sub);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 5px 0;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s, transform 0.1s;
+}
+.bottom-nav-btn:hover {
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.03);
+}
+.bottom-nav-btn.active {
+  color: var(--accent);
+}
+.bottom-nav-btn svg {
+  transition: transform 0.2s;
+}
+.bottom-nav-btn.active svg {
+  transform: scale(1.1);
+}

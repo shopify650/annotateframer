@@ -43,7 +43,7 @@ export interface AuthSession {
   access_token: string
 }
 
-export type TabType = "comments" | "invite" | "settings"
+export type TabType = "profile" | "projects" | "settings"
 export type PlanType = "free" | "pro" | "agency"
 
 export interface PlanLimits {

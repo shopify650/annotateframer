@@ -39,10 +39,13 @@ export function Setup({ onAuth }: Props) {
   return (
     <div className="setup-screen">
       <div className="setup-logo">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pin" style={{ color: "var(--accent)" }}><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-.44-1.24l-2.78-3.61A2 2 0 0 1 15 9.17V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4.17a2 2 0 0 1-.78 1.58L5.44 14a2 2 0 0 0-.44 1.24Z"/></svg>
-        <span className="logo-text">AnnotateFrame</span>
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect width="24" height="24" rx="6" fill="var(--accent)"/>
+          <path d="M7 12.5L10 15.5L17 8.5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+        <span className="logo-text">clientflow</span>
       </div>
-      <p className="setup-tagline">Client feedback, directly on your Framer site.</p>
+      <p className="setup-tagline">Client feedback, automated screenshots, zero hassle.</p>
 
       <form className="auth-form" onSubmit={handleSubmit}>
         <div className="tab-switch">
@@ -105,7 +108,7 @@ export function Setup({ onAuth }: Props) {
       </form>
 
       <p className="setup-footer">
-        Free plan includes 1 project &amp; 10 comments/month.
+        Zero hassle feedback management platform.
       </p>
     </div>
   )

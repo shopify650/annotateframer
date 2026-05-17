@@ -17,12 +17,12 @@ export function Dashboard({ session, onSignOut }: Props) {
   const [comments, setComments] = useState<Comment[]>([])
   const [installed, setInstalled] = useState(false)
   const [installing, setInstalling] = useState(false)
-  const [tab, setTab] = useState<TabType>("comments")
+  const [tab, setTab] = useState<TabType>("projects")
   const [filter, setFilter] = useState<"open" | "resolved" | "all">("open")
-  const [plan] = useState<PlanType>("free") // Replace with real subscription check
+  const [plan] = useState<PlanType>("free")
   const [loading, setLoading] = useState(true)
 
-  // ─── Load / create project ────────────────────────────────────────────────
+  // Load project & install status
   useEffect(() => {
     loadOrCreateProject()
     checkInstallStatus()
@@ -42,7 +42,7 @@ export function Dashboard({ session, onSignOut }: Props) {
     } else {
       const { data: created } = await supabase
         .from("projects")
-        .insert({ user_id: session.user.id, name: "My Framer Project" })
+        .insert({ user_id: session.user.id, name: "Project one" })
         .select()
         .single()
       if (created) setProject(created)
@@ -55,7 +55,7 @@ export function Dashboard({ session, onSignOut }: Props) {
     setInstalled(ok)
   }
 
-  // ─── Load comments when project is ready ─────────────────────────────────
+  // Load comments
   const loadComments = useCallback(async () => {
     if (!project) return
     const { data } = await supabase
@@ -70,7 +70,6 @@ export function Dashboard({ session, onSignOut }: Props) {
     if (!project) return
     loadComments()
 
-    // Realtime subscription
     const channel = supabase
       .channel(`af-comments-${project.id}`)
       .on(
@@ -88,10 +87,9 @@ export function Dashboard({ session, onSignOut }: Props) {
     return () => { supabase.removeChannel(channel) }
   }, [project, loadComments])
 
-  // Register native Framer Header Menu
+  // Framer Menu Integration
   useEffect(() => {
     if (!project) return
-    
     framer.setMenu([
       {
         label: "Open Live Site",
@@ -102,9 +100,7 @@ export function Dashboard({ session, onSignOut }: Props) {
           }
         }
       },
-      {
-        type: "separator"
-      },
+      { type: "separator" },
       {
         label: installed ? "Pause Comments" : "Activate Comments",
         onAction: () => {
@@ -115,17 +111,11 @@ export function Dashboard({ session, onSignOut }: Props) {
           }
         }
       },
-      {
-        type: "separator"
-      },
-      {
-        label: "Log Out",
-        onAction: onSignOut
-      }
+      { type: "separator" },
+      { label: "Log Out", onAction: onSignOut }
     ])
   }, [project, installed, onSignOut])
 
-  // ─── Install / remove script ──────────────────────────────────────────────
   async function handleInstall() {
     if (!project) return
     setInstalling(true)
@@ -136,9 +126,9 @@ export function Dashboard({ session, onSignOut }: Props) {
         import.meta.env.VITE_SUPABASE_ANON_KEY
       )
       setInstalled(true)
-      framer.notify("AnnotateFrame is now live on your site!", { variant: "success", durationMs: 3000 })
+      framer.notify("clientflow comments are now active!", { variant: "success", durationMs: 3000 })
     } catch (err) {
-      framer.notify("Failed to install script. Try again.", { variant: "error" })
+      framer.notify("Failed to install. Try again.", { variant: "error" })
     } finally {
       setInstalling(false)
     }
@@ -148,13 +138,12 @@ export function Dashboard({ session, onSignOut }: Props) {
     try {
       await removeAnnotateFrameScript()
       setInstalled(false)
-      framer.notify("Script removed/paused successfully.", { variant: "info", durationMs: 3000 })
+      framer.notify("Comments paused successfully.", { variant: "info", durationMs: 3000 })
     } catch (err) {
-      framer.notify("Failed to remove script.", { variant: "error" })
+      framer.notify("Failed to pause.", { variant: "error" })
     }
   }
 
-  // ─── Resolve comment ──────────────────────────────────────────────────────
   async function resolveComment(commentId: string) {
     await supabase
       .from("comments")
@@ -163,10 +152,7 @@ export function Dashboard({ session, onSignOut }: Props) {
     loadComments()
   }
 
-  // ─── Filtered comments ────────────────────────────────────────────────────
-  const displayed = comments.filter(c =>
-    filter === "all" ? true : c.status === filter
-  )
+  const displayed = comments.filter(c => filter === "all" ? true : c.status === filter)
   const openCount = comments.filter(c => c.status === "open").length
   const resolvedCount = comments.filter(c => c.status === "resolved").length
 
@@ -181,141 +167,175 @@ export function Dashboard({ session, onSignOut }: Props) {
 
   return (
     <div className="dashboard">
-      {/* ── Top Header ── */}
-      <div className="dash-header">
-        <div className="dash-logo">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pin" style={{ color: "var(--accent)" }}><line x1="12" x2="12" y1="17" y2="22"/><path d="M5 17h14v-1.76a2 2 0 0 0-.44-1.24l-2.78-3.61A2 2 0 0 1 15 9.17V5a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4.17a2 2 0 0 1-.78 1.58L5.44 14a2 2 0 0 0-.44 1.24Z"/></svg>
-          <span className="logo-label">AnnotateFrame</span>
-        </div>
-        <div className="dash-badges">
-          {openCount > 0 && <span className="badge-open">{openCount} open</span>}
-          <span className={`plan-chip plan-${plan}`}>{plan}</span>
-        </div>
+      {/* ── main content view ── */}
+      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+        
+        {/* TAB: PROJECTS (Main view showing the clientflow specs) */}
+        {tab === "projects" && (
+          <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
+            
+            {/* Elegant Header with bell, help & plus icons */}
+            <div className="dash-header" style={{ padding: "14px 16px 8px" }}>
+              <span style={{ fontSize: "17px", fontWeight: "700", letterSpacing: "-0.4px" }}>Dashboard</span>
+              <div style={{ display: "flex", alignItems: "center", gap: "10px", color: "var(--text-sub)" }}>
+                {/* Bell icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: "pointer" }}><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+                {/* Help question mark */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: "pointer" }}><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+                {/* Plus add icon */}
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: "pointer" }}><line x1="12" x2="12" y1="5" y2="19"/><line x1="5" x2="19" y1="12" y2="12"/></svg>
+              </div>
+            </div>
+
+            {/* Mesh Gradient Project Card */}
+            {project && (
+              <div className="project-card" onClick={() => {
+                if (project.site_url) {
+                  window.open(project.site_url.startsWith("http") ? project.site_url : `https://${project.site_url}`, "_blank")
+                }
+              }}>
+                <span className="project-card-title">{project.name}</span>
+                <span className="project-card-url">{project.site_url || "clientflow.framer.website"}</span>
+                {openCount > 0 && <span className="project-card-badge">{openCount}</span>}
+              </div>
+            )}
+
+            {/* Install Banner */}
+            {!installed && (
+              <div className="install-banner" style={{ margin: "0 12px 10px", borderRadius: "10px", border: "1px solid rgba(139, 92, 246, 0.2)" }}>
+                <div className="install-banner-text">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                  <div>
+                    <strong>Script not installed</strong>
+                    <p style={{ fontSize: "9px" }}>Inject clientflow script into your live site to collect feedback.</p>
+                  </div>
+                </div>
+                <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px" }} onClick={handleInstall} disabled={installing}>
+                  {installing ? "Installing…" : "Install"}
+                </button>
+              </div>
+            )}
+
+            {installed && (
+              <div className="installed-banner" style={{ margin: "0 12px 10px", borderRadius: "8px", border: "1px solid rgba(52, 199, 89, 0.25)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--green)" }}><polyline points="20 6 9 17 4 12"/></svg>
+                  <span style={{ fontSize: "10px" }}>Live on site</span>
+                </div>
+                <button className="btn-ghost" style={{ padding: "2px 6px", fontSize: "9px" }} onClick={handleRemove}>Pause</button>
+              </div>
+            )}
+
+            {/* Comments listing feed */}
+            <div className="comments-tab" style={{ flex: 1 }}>
+              {/* Filter pills */}
+              <div className="filter-bar" style={{ padding: "6px 12px" }}>
+                {(["open", "resolved", "all"] as const).map(f => (
+                  <button
+                    key={f}
+                    className={`filter-pill ${filter === f ? "active" : ""}`}
+                    onClick={() => setFilter(f)}
+                  >
+                    {f === "open" && `Open (${openCount})`}
+                    {f === "resolved" && `Done (${resolvedCount})`}
+                    {f === "all" && `All (${comments.length})`}
+                  </button>
+                ))}
+              </div>
+
+              {/* Comments list feed scrollable */}
+              {displayed.length === 0 ? (
+                <div className="empty-state">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--green)", marginBottom: "4px" }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <p className="empty-title">
+                    {filter === "open" ? "No open comments" : `No ${filter} comments`}
+                  </p>
+                  <p className="empty-sub">
+                    {filter === "open"
+                      ? "Share the invite link with your client to collect feedback."
+                      : "Comments will appear here once clients start writing."}
+                  </p>
+                </div>
+              ) : (
+                <div className="comments-list">
+                  {displayed.map(c => (
+                    <CommentThread
+                      key={c.id}
+                      comment={c}
+                      onResolve={() => resolveComment(c.id)}
+                      siteUrl={project?.site_url}
+                      inviteToken={project?.invite_token}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* TAB: PROFILE (User details, copy invite link, subscription, log out) */}
+        {tab === "profile" && (
+          <div className="invite-panel">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", paddingBottom: "8px", borderBottom: "1px solid var(--border)" }}>
+              <span style={{ fontSize: "16px", fontWeight: "700" }}>Profile Details</span>
+              <span className={`plan-chip plan-${plan}`}>{plan}</span>
+            </div>
+
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px", display: "flex", flexDirection: "column", gap: "4px" }}>
+              <span style={{ fontSize: "9px", color: "var(--text-sub)", textTransform: "uppercase", fontWeight: "700" }}>Account Email</span>
+              <span style={{ fontSize: "12px", fontWeight: "600" }}>{session?.user?.email || "user@agency.com"}</span>
+            </div>
+
+            {project && (
+              <InviteLink
+                token={project.invite_token}
+                projectId={project.id}
+                siteUrl={project.site_url}
+              />
+            )}
+
+            <button className="btn-primary" style={{ width: "100%", marginTop: "12px", background: "var(--red)", borderColor: "var(--red)", color: "#fff" }} onClick={onSignOut}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
+              Log Out
+            </button>
+          </div>
+        )}
+
+        {/* TAB: SETTINGS (Project configurations, billing plans details) */}
+        {tab === "settings" && (
+          <Settings
+            session={session}
+            project={project}
+            plan={plan}
+            onSignOut={onSignOut}
+            onProjectUpdate={setProject}
+          />
+        )}
+
       </div>
 
-      {/* ── Install Banner ── */}
-      {!installed && (
-        <div className="install-banner">
-          <div className="install-banner-text">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zap" style={{ color: "var(--accent)", marginTop: "2px" }}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            <div>
-              <strong>Script not installed</strong>
-              <p>Inject AnnotateFrame into your live site to start collecting feedback.</p>
-            </div>
-          </div>
-          <button className="btn-install" onClick={handleInstall} disabled={installing}>
-            {installing ? "Installing…" : "Install Now"}
-          </button>
-        </div>
-      )}
+      {/* ── Bottom Custom Tabs Navigation Bar ── */}
+      <div className="bottom-nav">
+        {/* Profile tab button */}
+        <button className={`bottom-nav-btn ${tab === "profile" ? "active" : ""}`} onClick={() => setTab("profile")}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </button>
 
-      {installed && (
-        <div className="installed-banner" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check" style={{ color: "var(--green)" }}><polyline points="20 6 9 17 4 12"/></svg>
-            <span>Live on site</span>
-          </div>
-          <button className="btn-ghost btn-xs" onClick={handleRemove}>Pause</button>
-        </div>
-      )}
+        {/* Projects tab button */}
+        <button className={`bottom-nav-btn ${tab === "projects" ? "active" : ""}`} onClick={() => setTab("projects")}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>
+          <span>Projects</span>
+        </button>
 
-      {/* ── Tabs ── */}
-      <div className="tabs-bar">
-        {(["comments", "invite", "settings"] as TabType[]).map(t => (
-          <button
-            key={t}
-            className={`tab-btn ${tab === t ? "active" : ""}`}
-            onClick={() => setTab(t)}
-            style={{ display: "inline-flex", alignItems: "center", gap: "4px", justifyContent: "center" }}
-          >
-            {t === "comments" && (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-message-square"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                <span>Comments{openCount > 0 ? ` (${openCount})` : ""}</span>
-              </>
-            )}
-            {t === "invite" && (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-link"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                <span>Invite</span>
-              </>
-            )}
-            {t === "settings" && (
-              <>
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-                <span>Settings</span>
-              </>
-            )}
-          </button>
-        ))}
+        {/* Settings tab button */}
+        <button className={`bottom-nav-btn ${tab === "settings" ? "active" : ""}`} onClick={() => setTab("settings")}>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.1a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+          <span>Settings</span>
+        </button>
       </div>
 
-      {/* ── Tab: Comments ── */}
-      {tab === "comments" && (
-        <div className="comments-tab">
-          {/* Filter pills */}
-          <div className="filter-bar">
-            {(["open", "resolved", "all"] as const).map(f => (
-              <button
-                key={f}
-                className={`filter-pill ${filter === f ? "active" : ""}`}
-                onClick={() => setFilter(f)}
-              >
-                {f === "open" && `Open (${openCount})`}
-                {f === "resolved" && `Done (${resolvedCount})`}
-                {f === "all" && `All (${comments.length})`}
-              </button>
-            ))}
-          </div>
-
-          {/* Comment list */}
-          {displayed.length === 0 ? (
-            <div className="empty-state">
-              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check-circle" style={{ color: "var(--green)", marginBottom: "4px" }}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              <p className="empty-title">
-                {filter === "open" ? "No open comments" : `No ${filter} comments`}
-              </p>
-              <p className="empty-sub">
-                {filter === "open"
-                  ? "Share the invite link with your client to get started."
-                  : "Comments will appear here once clients start reviewing."}
-              </p>
-            </div>
-          ) : (
-            <div className="comments-list">
-              {displayed.map(c => (
-                <CommentThread
-                  key={c.id}
-                  comment={c}
-                  onResolve={() => resolveComment(c.id)}
-                  siteUrl={project?.site_url}
-                  inviteToken={project?.invite_token}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab: Invite ── */}
-      {tab === "invite" && project && (
-        <InviteLink
-          token={project.invite_token}
-          projectId={project.id}
-          siteUrl={project.site_url}
-        />
-      )}
-
-      {/* ── Tab: Settings ── */}
-      {tab === "settings" && (
-        <Settings
-          session={session}
-          project={project}
-          plan={plan}
-          onSignOut={onSignOut}
-          onProjectUpdate={setProject}
-        />
-      )}
     </div>
   )
 }
