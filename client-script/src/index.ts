@@ -25,7 +25,7 @@ class AnnotateFrame {
   private toolbar: HTMLElement | null = null
   private modal: HTMLElement | null = null
   private comments: any[] = [] // Store loaded comments
-  private activeThreadInterval: any = null
+  private globalPollInterval: any = null
 
   // Element Selection & Screenshot properties
   private isSelectionMode = false
@@ -157,6 +157,10 @@ class AnnotateFrame {
     this.triggerBtn?.remove()
     document.querySelectorAll(".af-pin").forEach(p => p.remove())
     if (this.highlightOverlay) this.highlightOverlay.remove()
+    if (this.globalPollInterval) {
+      clearInterval(this.globalPollInterval)
+      this.globalPollInterval = null
+    }
     this.removeModal()
   }
 
@@ -426,6 +430,23 @@ class AnnotateFrame {
         border-color: rgba(255, 255, 255, 0.45);
         box-shadow: 0 8px 24px rgba(16, 185, 129, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.3);
       }
+      .af-unread-dot {
+        position: absolute;
+        top: -3px;
+        right: -3px;
+        width: 10px;
+        height: 10px;
+        background-color: #ef4444;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        animation: af-pulse-dot 2s infinite;
+        z-index: 2;
+      }
+      @keyframes af-pulse-dot {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+      }
 
       /* Thread Styles */
       .af-thread-scroll {
@@ -685,6 +706,12 @@ class AnnotateFrame {
     document.body.appendChild(wrap)
     this.modal = wrap
 
+    // Remove unread dot if present when opened
+    const pin = document.querySelector(`.af-pin[data-comment-id="${comment.id}"]`)
+    if (pin) pin.classList.remove("has-unread")
+    const unreadDot = pin?.querySelector(".af-unread-dot")
+    if (unreadDot) unreadDot.remove()
+
     document.getElementById("af-close")?.addEventListener("click", () => this.removeModal())
     if (!isResolved) {
       document.getElementById("af-send-reply")?.addEventListener("click", () => this.submitReply(comment.id, wrap))
@@ -904,6 +931,8 @@ private async submitComment(xPct: number, yPct: number, modal: HTMLElement) {
         // Sort comments chronologically so pin numbers match creation order perfectly
         this.comments.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
         this.comments.forEach((c: any, index: number) => this.dropPin(c, index + 1))
+        
+        this.startGlobalPolling()
       }
     } catch (e) { 
       console.error("[AF] Failed to load pins", e)
@@ -959,57 +988,71 @@ private async submitComment(xPct: number, yPct: number, modal: HTMLElement) {
       this.modal.remove()
       this.modal = null
     }
-    if (this.activeThreadInterval) {
-      clearInterval(this.activeThreadInterval)
-      this.activeThreadInterval = null
-    }
   }
 
-  private async pollReplies(commentId: string) {
-    try {
-      const url = `${this.supabaseUrl}/rest/v1/comments?select=*,replies(*)&id=eq.${commentId}`
-      const res = await fetch(url, {
-        headers: { apikey: this.anonKey, Authorization: `Bearer ${this.anonKey}` }
-      })
-      const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) {
-        const updatedComment = data[0]
-        
-        // Update local comments cache
-        const idx = this.comments.findIndex(c => c.id === commentId)
-        if (idx !== -1) {
-          const oldComment = this.comments[idx]
-          const oldRepliesCount = oldComment.replies?.length || 0
-          const newRepliesCount = updatedComment.replies?.length || 0
-          
-          this.comments[idx] = updatedComment
+  private startGlobalPolling() {
+    if (this.globalPollInterval) return;
+    this.globalPollInterval = setInterval(async () => {
+      try {
+        const currentPath = window.location.pathname
+        // EXCLUDE screenshot for blazing fast speed
+        const url = `${this.supabaseUrl}/rest/v1/comments?select=id,status,replies(*)&project_id=eq.${this.projectId}&page_path=eq.${currentPath}`
+        const res = await fetch(url, {
+          headers: { apikey: this.anonKey, Authorization: `Bearer ${this.anonKey}` }
+        })
+        const data = await res.json()
+        if (Array.isArray(data)) {
+          data.forEach(remoteComment => {
+            const idx = this.comments.findIndex(c => c.id === remoteComment.id)
+            if (idx !== -1) {
+              const oldComment = this.comments[idx]
+              const oldRepliesCount = oldComment.replies?.length || 0
+              const newRepliesCount = remoteComment.replies?.length || 0
+              
+              // Merge updates without destroying the local screenshot cache
+              const mergedComment = { ...oldComment, status: remoteComment.status, replies: remoteComment.replies }
+              this.comments[idx] = mergedComment
 
-          // If changes occurred, reactively update the open modal thread
-          if (this.modal && this.modal.getAttribute("data-comment-id") === commentId) {
-            if (newRepliesCount > oldRepliesCount || updatedComment.status !== oldComment.status) {
-              this.updateThreadModalUI(updatedComment)
-            }
-          }
-
-          // If resolved status changed, dynamically update the pin class live
-          if (updatedComment.status !== oldComment.status) {
-            document.querySelectorAll(".af-pin").forEach((p: any) => {
-              if (p.getAttribute("data-comment-id") === commentId) {
-                if (updatedComment.status === "resolved") {
-                  p.classList.add("resolved")
-                  p.style.animation = "af-pin-drop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, af-glow-pulse-resolved 2s infinite"
-                } else {
-                  p.classList.remove("resolved")
-                  p.style.animation = "af-pin-drop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, af-glow-pulse 2s infinite"
+              // Update active modal UI if this comment is open
+              if (this.modal && this.modal.getAttribute("data-comment-id") === remoteComment.id) {
+                if (newRepliesCount > oldRepliesCount || remoteComment.status !== oldComment.status) {
+                  this.updateThreadModalUI(mergedComment)
+                }
+              } else if (newRepliesCount > oldRepliesCount) {
+                // New reply received while modal is CLOSED! Add unread dot.
+                // Find if the new reply is from the agency
+                const latestReply = remoteComment.replies[remoteComment.replies.length - 1]
+                if (latestReply && latestReply.author === 'Agency') {
+                  const pin = document.querySelector(`.af-pin[data-comment-id="${remoteComment.id}"]`)
+                  if (pin && !pin.querySelector(".af-unread-dot")) {
+                    const dot = document.createElement("div")
+                    dot.className = "af-unread-dot"
+                    pin.appendChild(dot)
+                    pin.classList.add("has-unread")
+                  }
                 }
               }
-            })
-          }
+
+              // Handle status updates
+              if (remoteComment.status !== oldComment.status) {
+                const pin = document.querySelector(`.af-pin[data-comment-id="${remoteComment.id}"]`) as HTMLElement
+                if (pin) {
+                  if (remoteComment.status === "resolved") {
+                    pin.classList.add("resolved")
+                    pin.style.animation = "af-pin-drop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, af-glow-pulse-resolved 2s infinite"
+                  } else {
+                    pin.classList.remove("resolved")
+                    pin.style.animation = "af-pin-drop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both, af-glow-pulse 2s infinite"
+                  }
+                }
+              }
+            }
+          })
         }
+      } catch (e) {
+        console.error("[AF] Polling error:", e)
       }
-    } catch (e) {
-      console.error("[AF] Polling error:", e)
-    }
+    }, 4000)
   }
 
   private updateThreadModalUI(comment: any) {
