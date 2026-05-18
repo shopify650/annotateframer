@@ -14,6 +14,13 @@ interface Props {
   onProjectDelete: (id: string) => void
   autoClean: boolean
   onAutoCleanChange: (val: boolean) => void
+  installed: boolean
+  installing: boolean
+  onInstall: () => void
+  onRemove: () => void
+  showManualSetup: boolean
+  onHideManualSetup: () => void
+  permissionError: string | null
 }
 
 const PLANS = [
@@ -65,7 +72,14 @@ export function Settings({
   onSelectProject,
   onProjectDelete,
   autoClean,
-  onAutoCleanChange
+  onAutoCleanChange,
+  installed,
+  installing,
+  onInstall,
+  onRemove,
+  showManualSetup,
+  onHideManualSetup,
+  permissionError
 }: Props) {
   const [siteName, setSiteName] = useState(project?.name ?? "")
   const [siteUrl, setSiteUrl] = useState(project?.site_url ?? "")
@@ -122,6 +136,103 @@ export function Settings({
 
   return (
     <div className="settings-panel">
+      {/* Script Installation Section */}
+      <section className="settings-section">
+        <h4 className="settings-section-title">Site Script</h4>
+        
+        {!installed && (
+          <div className="install-banner" style={{ borderRadius: "10px", border: "1px solid var(--accent-dim)", marginBottom: "10px" }}>
+            <div className="install-banner-text">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+              <div>
+                <strong>Script not installed</strong>
+                <p style={{ fontSize: "9px" }}>Inject clientflow script into your live site to collect feedback.</p>
+              </div>
+            </div>
+            <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px" }} onClick={onInstall} disabled={installing}>
+              {installing ? "Installing…" : "Install"}
+            </button>
+          </div>
+        )}
+
+        {installed && (
+          <div className="installed-banner" style={{ borderRadius: "8px", border: "1px solid var(--green-dim)", marginBottom: "10px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--green)" }}><polyline points="20 6 9 17 4 12"/></svg>
+              <span style={{ fontSize: "10px" }}>Live on site</span>
+            </div>
+            <button className="btn-ghost" style={{ padding: "2px 6px", fontSize: "9px" }} onClick={onRemove}>Pause</button>
+          </div>
+        )}
+
+        {(showManualSetup || permissionError) && project && (
+          <div className="manual-setup-card" style={{
+            padding: "12px",
+            borderRadius: "10px",
+            background: "var(--surface2)",
+            border: "1px solid var(--border)",
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            marginBottom: "10px"
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: "10px", fontWeight: "700", color: "var(--yellow)", textTransform: "uppercase", letterSpacing: "0.5px" }}>⚠️ Manual Setup Required</span>
+              <button className="btn-ghost" style={{ padding: "2px 6px", fontSize: "9px" }} onClick={onHideManualSetup}>Hide</button>
+            </div>
+            <p style={{ fontSize: "9px", color: "var(--text-sub)", margin: 0, lineHeight: "1.3" }}>
+              Your Framer user role lacks permission to publish site scripts automatically. You can easily manage this manually:
+            </p>
+            <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "9px", color: "var(--text-sub)", paddingLeft: "4px", borderLeft: "2px solid var(--border)" }}>
+              <div><strong>🟢 To Activate:</strong> Copy the code below, paste it in <strong>Framer Settings → Custom Code → End of &lt;body&gt; tag</strong>, and Publish.</div>
+              <div><strong>🔴 To Pause:</strong> Go to <strong>Framer Settings → Custom Code</strong>, delete the AnnotateFrame code block, and Publish.</div>
+            </div>
+            <div style={{ position: "relative", marginTop: "4px" }}>
+              <textarea
+                readOnly
+                value={`<!-- AnnotateFrame Start -->\n<script>\n  window.ANNOTATEFRAME_PROJECT_ID = "${project.id}";\n  window.ANNOTATEFRAME_SUPABASE_URL = "${import.meta.env.VITE_SUPABASE_URL}";\n  window.ANNOTATEFRAME_ANON_KEY = "${import.meta.env.VITE_SUPABASE_ANON_KEY}";\n</script>\n<script src="https://project-pymvu.vercel.app/annotateframe.min.js" defer></script>\n<!-- AnnotateFrame End -->`}
+                style={{
+                  width: "100%",
+                  height: "80px",
+                  background: "var(--bg)",
+                  border: "1px solid var(--border)",
+                  borderRadius: "6px",
+                  color: "var(--accent)",
+                  fontFamily: "monospace",
+                  fontSize: "8.5px",
+                  padding: "6px",
+                  resize: "none",
+                  outline: "none",
+                  boxSizing: "border-box"
+                }}
+                onClick={(e) => (e.target as HTMLTextAreaElement).select()}
+              />
+              <button
+                onClick={() => {
+                  const code = `<!-- AnnotateFrame Start -->\n<script>\n  window.ANNOTATEFRAME_PROJECT_ID = "${project.id}";\n  window.ANNOTATEFRAME_SUPABASE_URL = "${import.meta.env.VITE_SUPABASE_URL}";\n  window.ANNOTATEFRAME_ANON_KEY = "${import.meta.env.VITE_SUPABASE_ANON_KEY}";\n</script>\n<script src="https://project-pymvu.vercel.app/annotateframe.min.js" defer></script>\n<!-- AnnotateFrame End -->`
+                  navigator.clipboard.writeText(code)
+                  framer.notify("Manual script copied!", { variant: "success", durationMs: 2000 })
+                }}
+                style={{
+                  position: "absolute",
+                  bottom: "6px",
+                  right: "6px",
+                  background: "var(--accent)",
+                  border: "none",
+                  borderRadius: "4px",
+                  color: "#fff",
+                  fontSize: "9px",
+                  padding: "3px 6px",
+                  cursor: "pointer",
+                  fontWeight: "600"
+                }}
+              >
+                Copy Code
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Account Section */}
       <section className="settings-section">
