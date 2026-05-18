@@ -274,10 +274,6 @@ async function handleCreateProject() {
             <div className="dash-header" style={{ padding: "14px 16px 8px" }}>
               <span style={{ fontSize: "17px", fontWeight: "700", letterSpacing: "-0.4px" }}>Dashboard</span>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "var(--text-sub)" }}>
-                {/* Bell icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: "pointer", transition: "color 0.2s" }} className="header-icon"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                {/* Help icon */}
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ cursor: "pointer", transition: "color 0.2s" }} className="header-icon"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                 {/* Plus add icon */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
