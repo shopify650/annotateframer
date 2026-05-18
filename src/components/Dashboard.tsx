@@ -20,8 +20,11 @@ export function Dashboard({ session, onSignOut }: Props) {
   const [installing, setInstalling] = useState(false)
   const [tab, setTab] = useState<TabType>("projects")
   const [filter, setFilter] = useState<"open" | "resolved" | "all">("open")
-  const plan: PlanType = session?.user?.email === "xavelop375@esyline.com" ? "agency" : "free"
+  const plan: PlanType = project?.plan ?? "free"
   const [loading, setLoading] = useState(true)
+  const [autoClean, setAutoClean] = useState(false)
+  const [currentMonthCommentCount, setCurrentMonthCommentCount] = useState(0)
+  const [commentLimitWarning, setCommentLimitWarning] = useState(false)
 
   // Manual installation states
   const [showManualSetup, setShowManualSetup] = useState(false)
@@ -35,6 +38,8 @@ export function Dashboard({ session, onSignOut }: Props) {
   useEffect(() => {
     loadOrCreateProject()
     checkInstallStatus()
+    // Store plan in sessionStorage for client script
+    sessionStorage.setItem("af_plan", plan)
   }, [])
 
   async function loadOrCreateProject() {
@@ -68,31 +73,37 @@ export function Dashboard({ session, onSignOut }: Props) {
   }
 
   // Create new project
-  async function handleCreateProject() {
-    if (!newProjectName.trim()) return
+async function handleCreateProject() {
+  if (!newProjectName.trim()) return
 
-    setLoading(true)
-    try {
-      const { data: created, error } = await supabase
-        .from("projects")
-        .insert({ user_id: session.user.id, name: newProjectName.trim() })
-        .select()
-        .single()
-
-      if (error) throw error
-      if (created) {
-        setProjects(prev => [created, ...prev])
-        setProject(created)
-        setShowCreateModal(false)
-        setNewProjectName("")
-        framer.notify(`Project "${created.name}" created!`, { variant: "success", durationMs: 3000 })
-      }
-    } catch (err) {
-      framer.notify("Failed to create project.", { variant: "error" })
-    } finally {
-      setLoading(false)
-    }
+  // Check project limit for free plan
+  if (plan === "free" && projects.length >= 1) {
+    framer.notify("Free plan limited to 1 project. Upgrade to Pro or Agency for unlimited projects.", { variant: "warning" })
+    return
   }
+
+  setLoading(true)
+  try {
+    const { data: created, error } = await supabase
+      .from("projects")
+      .insert({ user_id: session.user.id, name: newProjectName.trim() })
+      .select()
+      .single()
+
+    if (error) throw error
+    if (created) {
+      setProjects(prev => [created, ...prev])
+      setProject(created)
+      setShowCreateModal(false)
+      setNewProjectName("")
+      framer.notify(`Project "${created.name}" created!`, { variant: "success", durationMs: 3000 })
+    }
+  } catch (err) {
+    framer.notify("Failed to create project.", { variant: "error" })
+  } finally {
+    setLoading(false)
+  }
+}
 
   // Load comments
   const loadComments = useCallback(async () => {
@@ -125,6 +136,42 @@ export function Dashboard({ session, onSignOut }: Props) {
 
     return () => { supabase.removeChannel(channel) }
   }, [project, loadComments])
+
+  // Load auto-clean setting for current project
+  useEffect(() => {
+    if (project) {
+      const stored = localStorage.getItem(`af_autoclean_${project.id}`)
+      setAutoClean(stored === "true")
+    }
+  }, [project])
+
+  // Auto-cleanup logic: if autoClean is true and resolved > 100, delete oldest resolved
+  useEffect(() => {
+    if (!project || !autoClean) return
+    const resolved = comments.filter(c => c.status === "resolved").sort((a,b) => new Date(b.resolved_at || b.created_at).getTime() - new Date(a.resolved_at || a.created_at).getTime())
+    
+    if (resolved.length > 100) {
+      const toDelete = resolved.slice(100)
+      const idsToDelete = toDelete.map(c => c.id)
+      
+      if (idsToDelete.length > 0) {
+        supabase.from("comments").delete().in("id", idsToDelete).then(({ error }) => {
+          if (!error) {
+            setComments(prev => prev.filter(c => !idsToDelete.includes(c.id)))
+            framer.notify(`Auto-cleaned ${idsToDelete.length} old resolved comments`)
+          }
+        })
+      }
+    }
+  }, [comments, project, autoClean])
+
+  // Update comment count for current month whenever comments changes
+  useEffect(() => {
+    const now = new Date()
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+    const count = comments.filter(c => new Date(c.created_at) >= startOfMonth).length
+    setCurrentMonthCommentCount(count)
+  }, [comments])
 
   // Framer Menu Integration
   useEffect(() => {
@@ -253,7 +300,7 @@ export function Dashboard({ session, onSignOut }: Props) {
               <div className="project-card" style={{ cursor: "default", margin: "0 12px 12px" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
-                    <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", opacity: 0.8, color: "#fff" }}>Projects:</span>
+                    <span style={{ fontSize: "10px", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.5px", color: "var(--text-sub)" }}>Projects:</span>
                     <select
                       value={project.id}
                       onChange={(e) => {
@@ -261,10 +308,10 @@ export function Dashboard({ session, onSignOut }: Props) {
                         if (selected) setProject(selected)
                       }}
                       style={{
-                        background: "rgba(255, 255, 255, 0.12)",
-                        border: "1px solid rgba(255, 255, 255, 0.2)",
+                        background: "var(--surface2)",
+                        border: "1px solid var(--border-hi)",
                         borderRadius: "6px",
-                        color: "#fff",
+                        color: "var(--text)",
                         fontSize: "11px",
                         fontWeight: "700",
                         padding: "2px 6px",
@@ -273,7 +320,7 @@ export function Dashboard({ session, onSignOut }: Props) {
                       }}
                     >
                       {projects.map(p => (
-                        <option key={p.id} value={p.id} style={{ background: "#18181b", color: "#fff" }}>
+                        <option key={p.id} value={p.id}>
                           {p.name}
                         </option>
                       ))}
@@ -293,7 +340,7 @@ export function Dashboard({ session, onSignOut }: Props) {
                       }
                     }}
                     style={{
-                      background: "rgba(255, 255, 255, 0.15)",
+                      background: "var(--surface2)",
                       border: "none",
                       borderRadius: "6px",
                       width: "22px",
@@ -301,7 +348,7 @@ export function Dashboard({ session, onSignOut }: Props) {
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
-                      color: "#fff",
+                      color: "var(--text)",
                       cursor: "pointer",
                       transition: "background 0.2s"
                     }}
@@ -318,10 +365,10 @@ export function Dashboard({ session, onSignOut }: Props) {
                     window.open(reviewUrl, "_blank")
                   }
                 }}>
-                  <span className="project-card-title" style={{ display: "block", fontSize: "14px", fontWeight: "800", color: "#fff", letterSpacing: "-0.4px" }}>
+                  <span className="project-card-title">
                     {project.name}
                   </span>
-                  <span className="project-card-url" style={{ display: "block", marginTop: "3px", fontSize: "9.5px", opacity: 0.8, color: "rgba(255, 255, 255, 0.72)" }}>
+                  <span className="project-card-url">
                     {project.site_url || "clientflow.framer.website"}
                   </span>
                 </div>
@@ -330,7 +377,7 @@ export function Dashboard({ session, onSignOut }: Props) {
 
             {/* Install Banner */}
             {!installed && (
-              <div className="install-banner" style={{ margin: "0 12px 10px", borderRadius: "10px", border: "1px solid rgba(139, 92, 246, 0.2)" }}>
+              <div className="install-banner" style={{ margin: "0 12px 10px", borderRadius: "10px", border: "1px solid var(--accent-dim)" }}>
                 <div className="install-banner-text">
                   <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                   <div>
@@ -345,12 +392,28 @@ export function Dashboard({ session, onSignOut }: Props) {
             )}
 
             {installed && (
-              <div className="installed-banner" style={{ margin: "0 12px 10px", borderRadius: "8px", border: "1px solid rgba(52, 199, 89, 0.25)" }}>
+              <div className="installed-banner" style={{ margin: "0 12px 10px", borderRadius: "8px", border: "1px solid var(--green-dim)" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "4px" }}>
                   <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--green)" }}><polyline points="20 6 9 17 4 12"/></svg>
                   <span style={{ fontSize: "10px" }}>Live on site</span>
                 </div>
                 <button className="btn-ghost" style={{ padding: "2px 6px", fontSize: "9px" }} onClick={handleRemove}>Pause</button>
+              </div>
+            )}
+
+            {/* Comment Limit Warning Banner for Free Plan */}
+            {plan === "free" && currentMonthCommentCount >= 10 && (
+              <div className="install-banner" style={{ margin: "0 12px 10px", borderRadius: "10px", border: "1px solid var(--yellow-dim)", background: "var(--yellow-dim)" }}>
+                <div className="install-banner-text">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--yellow)" }}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                  <div>
+                    <strong style={{ color: "var(--yellow)" }}>Monthly Limit Reached</strong>
+                    <p style={{ fontSize: "9px" }}>Free plan is limited to 10 comments/month. Upgrade to Pro for unlimited comments.</p>
+                  </div>
+                </div>
+                <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px", background: "var(--yellow)", borderColor: "var(--yellow)", color: "#000" }} onClick={() => setTab("settings")}>
+                  Upgrade
+                </button>
               </div>
             )}
 
@@ -360,7 +423,7 @@ export function Dashboard({ session, onSignOut }: Props) {
                 margin: "0 12px 10px",
                 padding: "12px",
                 borderRadius: "10px",
-                background: "rgba(255, 255, 255, 0.03)",
+                background: "var(--surface2)",
                 border: "1px solid var(--border)",
                 display: "flex",
                 flexDirection: "column",
@@ -387,10 +450,10 @@ export function Dashboard({ session, onSignOut }: Props) {
                     style={{
                       width: "100%",
                       height: "80px",
-                      background: "rgba(0,0,0,0.4)",
-                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "var(--bg)",
+                      border: "1px solid var(--border)",
                       borderRadius: "6px",
-                      color: "#a78bfa",
+                      color: "var(--accent)",
                       fontFamily: "monospace",
                       fontSize: "8.5px",
                       padding: "6px",
@@ -487,6 +550,16 @@ export function Dashboard({ session, onSignOut }: Props) {
               <span style={{ fontSize: "12px", fontWeight: "600" }}>{session?.user?.email || "user@agency.com"}</span>
             </div>
 
+            <div style={{ background: "var(--surface)", border: "1px solid var(--border)", borderRadius: "10px", padding: "12px", display: "flex", flexDirection: "column", gap: "6px" }}>
+              <span style={{ fontSize: "9px", color: "var(--text-sub)", textTransform: "uppercase", fontWeight: "700" }}>Monthly Usage</span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "12px", fontWeight: "600" }}>
+                <span>Comments this month:</span>
+                <span style={{ color: plan === "free" && currentMonthCommentCount >= 10 ? "var(--red)" : "var(--text)" }}>
+                  {plan === "free" ? `${currentMonthCommentCount} / 10` : `${currentMonthCommentCount} / ∞`}
+                </span>
+              </div>
+            </div>
+
             {project && (
               <InviteLink
                 token={project.invite_token}
@@ -509,6 +582,11 @@ export function Dashboard({ session, onSignOut }: Props) {
             project={project}
             projects={projects}
             plan={plan}
+            autoClean={autoClean}
+            onAutoCleanChange={(val) => {
+              setAutoClean(val)
+              if (project) localStorage.setItem(`af_autoclean_${project.id}`, String(val))
+            }}
             onSignOut={onSignOut}
             onProjectUpdate={(updated) => {
               setProject(updated)

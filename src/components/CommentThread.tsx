@@ -102,10 +102,10 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
                   display: "inline-flex",
                   alignItems: "center",
                   textDecoration: "none",
-                  color: "#a78bfa",
+                  color: "var(--accent)",
                   fontWeight: "600",
-                  background: "rgba(139, 92, 246, 0.15)",
-                  border: "1px solid rgba(139, 92, 246, 0.3)"
+                  background: "var(--accent-dim)",
+                  border: "1px solid var(--accent-dim)"
                 }}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-external-link" style={{ marginRight: "3px" }}><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
@@ -127,7 +127,7 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
                 position: "relative",
                 borderRadius: "8px",
                 overflow: "hidden",
-                border: "1px solid rgba(255, 255, 255, 0.08)",
+                border: "1px solid var(--border)",
                 cursor: "pointer",
                 maxHeight: "120px"
               }}
@@ -143,11 +143,11 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
                   bottom: 0,
                   left: 0,
                   right: 0,
-                  background: "rgba(15, 15, 20, 0.75)",
+                  background: "var(--surface)",
                   backdropFilter: "blur(4px)",
                   padding: "4px 8px",
                   fontSize: "10px",
-                  color: "#ccc",
+                  color: "var(--text-sub)",
                   display: "flex",
                   alignItems: "center",
                   gap: "4px"
@@ -169,7 +169,7 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
                 right: 0,
                 bottom: 0,
                 zIndex: 2147483647,
-                background: "rgba(10, 10, 12, 0.9)",
+                background: "var(--bg)",
                 backdropFilter: "blur(20px)",
                 display: "flex",
                 flexDirection: "column",
@@ -184,9 +184,9 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
                   position: "absolute",
                   top: "20px",
                   right: "20px",
-                  background: "rgba(255,255,255,0.1)",
+                  background: "var(--surface2)",
                   border: "none",
-                  color: "#fff",
+                  color: "var(--text)",
                   padding: "8px 16px",
                   borderRadius: "100px",
                   fontSize: "12px",
@@ -206,12 +206,12 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
                   maxWidth: "95%",
                   maxHeight: "80vh",
                   borderRadius: "12px",
-                  border: "1px solid rgba(255,255,255,0.12)",
-                  boxShadow: "0 12px 64px rgba(0,0,0,0.8)"
+                  border: "1px solid var(--border-hi)",
+                  boxShadow: "0 12px 64px rgba(0,0,0,0.5)"
                 }}
                 alt="Full Snapshot"
               />
-              <p style={{ marginTop: "16px", color: "rgba(255,255,255,0.6)", fontSize: "12px", textAlign: "center" }}>
+              <p style={{ marginTop: "16px", color: "var(--text-sub)", fontSize: "12px", textAlign: "center" }}>
                 Target element snapshot for comment by <strong>{comment.client_name}</strong>
               </p>
             </div>

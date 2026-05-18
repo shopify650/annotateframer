@@ -8,17 +8,17 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  /* Default Dark Mode (if no custom variables or light theme are active) */
-  --bg:         #0c0c0f;
-  --surface:    #161620;
-  --surface2:   #1f1f2e;
-  --border:     rgba(255, 255, 255, 0.08);
-  --border-hi:  rgba(255, 255, 255, 0.14);
-  --text:       #f5f5f7;
-  --text-sub:   #8a8a93;
-  --accent:     #8b5cf6;
-  --accent-dim: rgba(139, 92, 246, 0.15);
-  --accent-dark: #6d28d9;
+  /* Map custom variables to Framer native theme variables */
+  --bg:         var(--framer-color-bg, #0c0c0f);
+  --surface:    var(--framer-color-bg-secondary, #161620);
+  --surface2:   var(--framer-color-bg-tertiary, #1f1f2e);
+  --border:     var(--framer-color-divider, rgba(255, 255, 255, 0.08));
+  --border-hi:  var(--framer-color-divider, rgba(255, 255, 255, 0.14));
+  --text:       var(--framer-color-text, #f5f5f7);
+  --text-sub:   var(--framer-color-text-secondary, #8a8a93);
+  --accent:     var(--framer-color-tint, #8b5cf6);
+  --accent-dim: var(--framer-color-tint-dimmed, rgba(139, 92, 246, 0.15));
+  --accent-dark: var(--framer-color-tint-dark, #6d28d9);
   
   /* System States */
   --green:      #22c55e;
@@ -31,54 +31,6 @@
   --radius:     8px;
   --radius-lg:  12px;
   --font:       "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-}
-
-/* Light Mode Overrides */
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg:         #ffffff;
-    --surface:    #f8fafc;
-    --surface2:   #f1f5f9;
-    --border:     rgba(0, 0, 0, 0.07);
-    --border-hi:  rgba(0, 0, 0, 0.13);
-    --text:       #0f172a;
-    --text-sub:   #64748b;
-    --accent:     #8b5cf6;
-    --accent-dim: rgba(139, 92, 246, 0.1);
-    --accent-dark: #7c3aed;
-  }
-}
-
-/* Explicit Light Theme Trigger Hooks */
-html[data-framer-theme="light"],
-body.framer-theme-light,
-.framer-theme-light {
-  --bg:         #ffffff;
-  --surface:    #f8fafc;
-  --surface2:   #f1f5f9;
-  --border:     rgba(0, 0, 0, 0.07);
-  --border-hi:  rgba(0, 0, 0, 0.13);
-  --text:       #0f172a;
-  --text-sub:   #64748b;
-  --accent:     #8b5cf6;
-  --accent-dim: rgba(139, 92, 246, 0.1);
-  --accent-dark: #7c3aed;
-}
-
-/* Explicit Dark Theme Trigger Hooks */
-html[data-framer-theme="dark"],
-body.framer-theme-dark,
-.framer-theme-dark {
-  --bg:         #0c0c0f;
-  --surface:    #161620;
-  --surface2:   #1f1f2e;
-  --border:     rgba(255, 255, 255, 0.08);
-  --border-hi:  rgba(255, 255, 255, 0.14);
-  --text:       #f5f5f7;
-  --text-sub:   #8a8a93;
-  --accent:     #8b5cf6;
-  --accent-dim: rgba(139, 92, 246, 0.15);
-  --accent-dark: #6d28d9;
 }
 
 
@@ -728,57 +680,31 @@ button:disabled {
    ───────────────────────────────────────────── */
 .project-card {
   position: relative;
-  background: linear-gradient(135deg, #0f0c1b 0%, #171030 50%, #0d1e3d 100%);
-  border: 1.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   padding: 16px 14px;
   margin: 8px 12px 12px;
   overflow: hidden;
-  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   gap: 4px;
   cursor: pointer;
-  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), border-color 0.25s;
-}
-.project-card::before {
-  content: "";
-  position: absolute;
-  top: -50%; left: -50%; width: 200%; height: 200%;
-  background: radial-gradient(circle at 75% 25%, rgba(139, 92, 246, 0.28) 0%, transparent 45%),
-              radial-gradient(circle at 25% 75%, rgba(59, 130, 246, 0.22) 0%, transparent 45%),
-              radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.08) 0%, transparent 40%);
-  pointer-events: none;
+  transition: transform 0.15s, border-color 0.15s;
 }
 .project-card:hover {
-  transform: scale(1.02) translateY(-2px);
-  border-color: rgba(139, 92, 246, 0.45);
+  transform: translateY(-1px);
+  border-color: var(--border-hi);
 }
 .project-card-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: #ffffff;
-  z-index: 2;
-  letter-spacing: -0.3px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: -0.2px;
 }
 .project-card-url {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-  z-index: 2;
-}
-.project-card-badge {
-  position: absolute;
-  top: 18px; right: 18px;
-  width: 24px; height: 24px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  font-size: 10px; font-weight: 700;
-  display: flex; align-items: center; justify-content: center;
-  z-index: 2;
+  color: var(--text-sub);
 }
 
 /* Bottom Nav bar */
@@ -808,7 +734,7 @@ button:disabled {
 }
 .bottom-nav-btn:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface2);
 }
 .bottom-nav-btn.active {
   color: var(--accent);

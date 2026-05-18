@@ -6,6 +6,7 @@ export interface Project {
   name: string
   site_url: string | null
   invite_token: string
+  plan: PlanType
   created_at: string
 }
 
@@ -57,12 +58,12 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<PlanType, PlanLimits> = {
   free: {
-    maxProjects: Infinity,
-    maxComments: Infinity,
-    emailNotifications: true,
+    maxProjects: 1,
+    maxComments: 10,
+    emailNotifications: false,
     replies: true,
-    whiteLabelModal: true,
-    teamSeats: 99,
+    whiteLabelModal: false,
+    teamSeats: 1,
   },
   pro: {
     maxProjects: Infinity,

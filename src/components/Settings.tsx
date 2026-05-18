@@ -12,6 +12,8 @@ interface Props {
   onProjectUpdate: (p: Project) => void
   onSelectProject: (p: Project) => void
   onProjectDelete: (id: string) => void
+  autoClean: boolean
+  onAutoCleanChange: (val: boolean) => void
 }
 
 const PLANS = [
@@ -40,7 +42,7 @@ const PLANS = [
   {
     id: "agency",
     label: "Agency",
-    price: "$59/mo",
+    price: "Coming Soon",
     features: [
       "Everything in Pro",
       "3 team seats",
@@ -49,7 +51,7 @@ const PLANS = [
       "Slack notifications",
     ],
     highlight: false,
-    checkoutUrl: "https://annotateframe.lemonsqueezy.com/checkout/buy/AGENCY_VARIANT_ID",
+    checkoutUrl: null,
   },
 ]
 
@@ -61,7 +63,9 @@ export function Settings({
   onSignOut,
   onProjectUpdate,
   onSelectProject,
-  onProjectDelete
+  onProjectDelete,
+  autoClean,
+  onAutoCleanChange
 }: Props) {
   const [siteName, setSiteName] = useState(project?.name ?? "")
   const [siteUrl, setSiteUrl] = useState(project?.site_url ?? "")
@@ -156,6 +160,20 @@ export function Settings({
               onChange={e => setSiteUrl(e.target.value)}
               placeholder="https://mysite.framer.website"
             />
+          </div>
+
+          <div className="field-group" style={{ flexDirection: "row", alignItems: "center", gap: "8px", marginTop: "16px", marginBottom: "8px", background: "var(--surface2)", padding: "12px", borderRadius: "var(--radius)" }}>
+            <input 
+              type="checkbox" 
+              id="autoClean" 
+              checked={autoClean}
+              onChange={e => onAutoCleanChange(e.target.checked)}
+              style={{ accentColor: "var(--accent)", cursor: "pointer", width: "16px", height: "16px" }}
+            />
+            <label htmlFor="autoClean" className="field-label" style={{ margin: 0, cursor: "pointer", display: "flex", flexDirection: "column", gap: "2px" }}>
+              <span style={{ fontSize: "12px", color: "var(--text)" }}>Auto-clean resolved comments</span>
+              <span style={{ fontSize: "10.5px", color: "var(--text-sub)", fontWeight: 400 }}>Automatically delete older resolved comments when total done messages exceed 100.</span>
+            </label>
           </div>
           <div style={{ display: "flex", gap: "8px", marginTop: "12px", alignItems: "center" }}>
             <button className="btn-primary btn-sm" onClick={saveProject} disabled={saving}>

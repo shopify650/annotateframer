@@ -75,15 +75,47 @@ class AnnotateFrame {
     this.loadExistingPins()
   }
 
+  private async fetchProjectPlan() {
+    try {
+      const res = await fetch(
+        `${this.supabaseUrl}/rest/v1/rpc/get_project_status`,
+        {
+          method: "POST",
+          headers: {
+            apikey: this.anonKey,
+            Authorization: `Bearer ${this.anonKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ p_project_id: this.projectId })
+        }
+      )
+      const data = await res.json()
+      if (data && data.exists) {
+        localStorage.setItem("af_plan", data.plan || "free")
+      }
+    } catch (e) {
+      console.error("[AF] Failed to fetch project plan:", e)
+    }
+  }
+
   private async validateToken(token: string) {
     try {
       const res = await fetch(
-        `${this.supabaseUrl}/rest/v1/projects?invite_token=eq.${encodeURIComponent(token)}&select=id`,
-        { headers: { apikey: this.anonKey, Authorization: `Bearer ${this.anonKey}` } }
+        `${this.supabaseUrl}/rest/v1/rpc/validate_invite_token`,
+        {
+          method: "POST",
+          headers: {
+            apikey: this.anonKey,
+            Authorization: `Bearer ${this.anonKey}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ p_token: token })
+        }
       )
       const data = await res.json()
-      if (Array.isArray(data) && data.length > 0) {
+      if (data && data.valid) {
         localStorage.setItem("af_active", "true")
+        localStorage.setItem("af_plan", data.plan || "free")
         this.activate()
         // Check if there is an active highlight in url too
         const highlightId = new URLSearchParams(window.location.search).get("highlight_id")
@@ -115,6 +147,7 @@ class AnnotateFrame {
   private activate() {
     this.injectStyles()
     this.createTriggerButton()
+    this.fetchProjectPlan()
     this.loadExistingPins()
   }
 
@@ -661,93 +694,119 @@ class AnnotateFrame {
     this.activeThreadInterval = setInterval(() => this.pollReplies(comment.id), 4000)
   }
 
-  private async submitComment(xPct: number, yPct: number, modal: HTMLElement) {
-    const name  = (document.getElementById("af-name")  as HTMLInputElement)?.value.trim()
-    const email = (document.getElementById("af-email") as HTMLInputElement)?.value.trim()
-    const body  = (document.getElementById("af-body")  as HTMLTextAreaElement)?.value.trim()
+private async submitComment(xPct: number, yPct: number, modal: HTMLElement) {
+  const name  = (document.getElementById("af-name")  as HTMLInputElement)?.value.trim()
+  const email = (document.getElementById("af-email") as HTMLInputElement)?.value.trim()
+  const body  = (document.getElementById("af-body")  as HTMLTextAreaElement)?.value.trim()
 
-    if (!name || !email || !body) { this.showToast("⚠️ Please fill all fields", "#f59e0b"); return }
+  if (!name || !email || !body) { this.showToast("⚠️ Please fill all fields", "#f59e0b"); return }
 
-    // Save for next time
-    localStorage.setItem("af_name", name)
-    localStorage.setItem("af_email", email)
-
-    const btn = document.getElementById("af-submit") as HTMLButtonElement
-    btn.disabled = true; btn.textContent = "Sending…"
-
-    // Await background screenshot capture if it hasn't completed yet
-    let screenshotBase64 = ""
-    if (this.currentScreenshotPromise) {
-      btn.textContent = "Finalizing…"
-      try {
-        screenshotBase64 = await this.currentScreenshotPromise
-      } catch (err) {
-        console.error("[AF] Error awaiting screenshot:", err)
+  // Check comment limit for free plan
+  try {
+    const res = await fetch(
+      `${this.supabaseUrl}/rest/v1/rpc/get_project_status`,
+      {
+        method: "POST",
+        headers: {
+          apikey: this.anonKey,
+          Authorization: `Bearer ${this.anonKey}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ p_project_id: this.projectId })
+      }
+    )
+    const data = await res.json()
+    if (data && data.exists) {
+      localStorage.setItem("af_plan", data.plan || "free")
+      if (data.limit_reached) {
+        this.showToast("⚠️ Free plan limited to 10 comments/month. Upgrade for unlimited comments.", "#f59e0b");
+        return;
       }
     }
+  } catch (e) {
+    console.error("[AF] Failed to check monthly comment limit:", e)
+  }
 
-    const payload: any = {
-      project_id:  this.projectId,
-      x_percent:   xPct,
-      y_percent:   yPct,
-      page_path:   window.location.pathname,
-      client_name: name,
-      client_email: email,
-      body,
-      browser:     navigator.userAgent.slice(0, 120),
-      viewport_w:  window.innerWidth,
-    }
+  // Save for next time
+  localStorage.setItem("af_name", name)
+  localStorage.setItem("af_email", email)
 
-    if (screenshotBase64) {
-      payload.screenshot = screenshotBase64
-    }
+  const btn = document.getElementById("af-submit") as HTMLButtonElement
+  btn.disabled = true; btn.textContent = "Sending…"
 
+  // Await background screenshot capture if it hasn't completed yet
+  let screenshotBase64 = ""
+  if (this.currentScreenshotPromise) {
+    btn.textContent = "Finalizing…"
     try {
-      let res = await fetch(`${this.supabaseUrl}/rest/v1/comments`, {
+      screenshotBase64 = await this.currentScreenshotPromise
+    } catch (err) {
+      console.error("[AF] Error awaiting screenshot:", err)
+    }
+  }
+
+  const payload: any = {
+    project_id:  this.projectId,
+    x_percent:   xPct,
+    y_percent:   yPct,
+    page_path:   window.location.pathname,
+    client_name: name,
+    client_email: email,
+    body,
+    browser:     navigator.userAgent.slice(0, 120),
+    viewport_w:  window.innerWidth,
+  }
+
+  if (screenshotBase64) {
+    payload.screenshot = screenshotBase64
+  }
+
+  try {
+    let res = await fetch(`${this.supabaseUrl}/rest/v1/comments`, {
+      method: "POST",
+      headers: {
+        apikey: this.anonKey,
+        Authorization: `Bearer ${this.anonKey}`,
+        "Content-Type": "application/json",
+        Prefer: "return=representation", // Get the created record back
+      },
+      body: JSON.stringify(payload),
+    })
+
+    if (!res.ok && payload.screenshot) {
+      console.warn("[AF] Post failed, retrying without screenshot...");
+      delete payload.screenshot
+      res = await fetch(`${this.supabaseUrl}/rest/v1/comments`, {
         method: "POST",
         headers: {
           apikey: this.anonKey,
           Authorization: `Bearer ${this.anonKey}`,
           "Content-Type": "application/json",
-          Prefer: "return=representation", // Get the created record back
+          Prefer: "return=representation",
         },
         body: JSON.stringify(payload),
       })
+    }
 
-      if (!res.ok && payload.screenshot) {
-        console.warn("[AF] Post failed, retrying without screenshot...");
-        delete payload.screenshot
-        res = await fetch(`${this.supabaseUrl}/rest/v1/comments`, {
-          method: "POST",
-          headers: {
-            apikey: this.anonKey,
-            Authorization: `Bearer ${this.anonKey}`,
-            "Content-Type": "application/json",
-            Prefer: "return=representation",
-          },
-          body: JSON.stringify(payload),
-        })
+    if (res.ok) {
+      const data = await res.json()
+      if (data && data[0]) {
+        const newComment = { ...data[0], replies: [] }
+        this.comments.push(newComment)
+        this.removeModal()
+        this.dropPin(newComment, this.comments.length)
+        this.showToast("✅ Comment sent!", "#22c55e")
+        this.stopSelectionMode()
       }
-
-      if (res.ok) {
-        const data = await res.json()
-        if (data && data[0]) {
-          const newComment = { ...data[0], replies: [] }
-          this.comments.push(newComment)
-          this.removeModal()
-          this.dropPin(newComment, this.comments.length)
-          this.showToast("✅ Comment sent!", "#22c55e")
-          this.stopSelectionMode()
-        }
-      } else {
-        this.showToast("❌ Failed to send. Try again.", "#ef4444")
-        btn.disabled = false; btn.textContent = "Submit →"
-      }
-    } catch {
-      this.showToast("❌ Network error. Try again.", "#ef4444")
+    } else {
+      this.showToast("❌ Failed to send. Try again.", "#ef4444")
       btn.disabled = false; btn.textContent = "Submit →"
     }
+  } catch {
+    this.showToast("❌ Network error. Try again.", "#ef4444")
+    btn.disabled = false; btn.textContent = "Submit →"
   }
+}
 
   private async submitReply(commentId: string, modal: HTMLElement) {
     const body = (document.getElementById("af-reply-body") as HTMLTextAreaElement)?.value.trim()

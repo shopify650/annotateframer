@@ -93,3 +93,56 @@ create index if not exists idx_comments_status     on comments(status);
 create index if not exists idx_replies_comment_id  on replies(comment_id);
 create index if not exists idx_projects_user_id    on projects(user_id);
 create index if not exists idx_projects_token      on projects(invite_token);
+
+-- ─── RPCS FOR CLIENTS (BYPASSING RLS SECURELY) ──────────────────────────────
+create or replace function get_project_status(p_project_id uuid)
+returns json
+security definer
+as $$
+declare
+  v_plan text;
+  v_count integer;
+begin
+  select plan into v_plan from projects where id = p_project_id;
+  
+  if v_plan is null then
+    return json_build_object('exists', false);
+  end if;
+
+  select count(*) into v_count 
+  from comments 
+  where project_id = p_project_id 
+    and created_at >= date_trunc('month', now());
+
+  return json_build_object(
+    'exists', true,
+    'plan', v_plan,
+    'comment_count', v_count,
+    'limit_reached', (v_plan = 'free' and v_count >= 10)
+  );
+end;
+$$ language plpgsql;
+
+create or replace function validate_invite_token(p_token text)
+returns json
+security definer
+as $$
+declare
+  v_project_id uuid;
+  v_plan text;
+begin
+  select id, plan into v_project_id, v_plan 
+  from projects 
+  where invite_token = p_token;
+  
+  if v_project_id is null then
+    return json_build_object('valid', false);
+  end if;
+  
+  return json_build_object(
+    'valid', true,
+    'project_id', v_project_id,
+    'plan', v_plan
+  );
+end;
+$$ language plpgsql;
