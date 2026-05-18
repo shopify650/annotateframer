@@ -2,7 +2,8 @@ import { useEffect, useState, useCallback } from "react"
 import { supabase } from "../lib/supabase"
 import { framer } from "framer-plugin"
 import { injectAnnotateFrameScript, removeAnnotateFrameScript, isScriptInstalled } from "../lib/inject"
-import { CommentThread } from "./CommentThread"
+import { InboxItem } from "./InboxItem"
+import { ChatView } from "./ChatView"
 import { InviteLink } from "./InviteLink"
 import { Settings } from "./Settings"
 import type { Comment, Project, TabType, PlanType } from "../types"
@@ -25,6 +26,7 @@ export function Dashboard({ session, onSignOut }: Props) {
   const [autoClean, setAutoClean] = useState(false)
   const [currentMonthCommentCount, setCurrentMonthCommentCount] = useState(0)
   const [commentLimitWarning, setCommentLimitWarning] = useState(false)
+  const [activeCommentId, setActiveCommentId] = useState<string | null>(null)
 
   // Manual installation states
   const [showManualSetup, setShowManualSetup] = useState(false)
@@ -422,14 +424,12 @@ async function handleCreateProject() {
                   </p>
                 </div>
               ) : (
-                <div className="comments-list">
+                <div className="comments-list" style={{ flex: 1, overflowY: "auto", display: "flex", flexDirection: "column" }}>
                   {displayed.map(c => (
-                    <CommentThread
+                    <InboxItem
                       key={c.id}
                       comment={c}
-                      onResolve={() => resolveComment(c.id)}
-                      siteUrl={project?.site_url}
-                      inviteToken={project?.invite_token}
+                      onClick={() => setActiveCommentId(c.id)}
                     />
                   ))}
                 </div>
@@ -603,6 +603,16 @@ async function handleCreateProject() {
         </button>
       </div>
 
+      {/* Chat View Overlay */}
+      {activeCommentId && (
+        <ChatView
+          comment={comments.find(c => c.id === activeCommentId)!}
+          onClose={() => setActiveCommentId(null)}
+          onResolve={() => resolveComment(activeCommentId)}
+          siteUrl={project?.site_url}
+          inviteToken={project?.invite_token}
+        />
+      )}
     </div>
   )
 }
