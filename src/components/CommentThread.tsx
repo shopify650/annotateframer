@@ -114,151 +114,53 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
             )}
           </div>
 
-          {/* Body */}
-          <p className="comment-body">"{comment.body}"</p>
-
-          {/* Screenshot Preview Element */}
-          {comment.screenshot && (
-            <div
-              className="comment-screenshot-preview"
-              onClick={() => setLightboxOpen(true)}
-              style={{
-                marginTop: "10px",
-                position: "relative",
-                borderRadius: "8px",
-                overflow: "hidden",
-                border: "1px solid var(--border)",
-                cursor: "pointer",
-                maxHeight: "120px"
-              }}
-            >
-              <img
-                src={comment.screenshot}
-                style={{ width: "100%", height: "120px", objectFit: "cover", display: "block" }}
-                alt="Element Snapshot"
-              />
-              <div
-                style={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  background: "var(--surface)",
-                  backdropFilter: "blur(4px)",
-                  padding: "4px 8px",
-                  fontSize: "10px",
-                  color: "var(--text-sub)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px"
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-zoom-in"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/></svg>
-                Target Element Screenshot (Click to enlarge)
+          {/* Chat Feed */}
+          <div className="chat-feed">
+            {/* Initial Comment (Client) */}
+            <div className="chat-bubble-row client">
+              <div className="chat-bubble">
+                {comment.body}
+                <span className="chat-time">{timeAgo(comment.created_at)}</span>
               </div>
             </div>
-          )}
 
-          {/* Lightbox Modal */}
-          {lightboxOpen && comment.screenshot && (
-            <div
-              style={{
-                position: "fixed",
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                zIndex: 2147483647,
-                background: "var(--bg)",
-                backdropFilter: "blur(20px)",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "center",
-                padding: "24px"
-              }}
-              onClick={() => setLightboxOpen(false)}
-            >
-              <div
-                style={{
-                  position: "absolute",
-                  top: "20px",
-                  right: "20px",
-                  background: "var(--surface2)",
-                  border: "none",
-                  color: "var(--text)",
-                  padding: "8px 16px",
-                  borderRadius: "100px",
-                  fontSize: "12px",
-                  fontWeight: "600",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "4px"
-                }}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="18" x2="6" y1="6" y2="18"/><line x1="6" x2="18" y1="6" y2="18"/></svg>
-                Close
-              </div>
-              <img
-                src={comment.screenshot}
-                style={{
-                  maxWidth: "95%",
-                  maxHeight: "80vh",
-                  borderRadius: "12px",
-                  border: "1px solid var(--border-hi)",
-                  boxShadow: "0 12px 64px rgba(0,0,0,0.5)"
-                }}
-                alt="Full Snapshot"
-              />
-              <p style={{ marginTop: "16px", color: "var(--text-sub)", fontSize: "12px", textAlign: "center" }}>
-                Target element snapshot for comment by <strong>{comment.client_name}</strong>
-              </p>
-            </div>
-          )}
-
-          {/* Client email */}
-          <a href={`mailto:${comment.client_email}`} className="client-email" style={{ marginTop: "10px", display: "inline-block" }}>
-            {comment.client_email}
-          </a>
-
-          {/* Replies */}
-          {comment.replies && comment.replies.length > 0 && (
-            <div className="replies-list">
-              {comment.replies.map((r: Reply) => (
-                <div key={r.id} className={`reply-item ${r.author === "Agency" ? "reply-agency" : "reply-client"}`}>
-                  <span className="reply-author">{r.author}</span>
-                  <span className="reply-body">{r.body}</span>
-                  <span className="reply-time">{timeAgo(r.created_at)}</span>
+            {/* Replies */}
+            {comment.replies && comment.replies.map((r: Reply) => (
+              <div key={r.id} className={`chat-bubble-row ${r.author === "Agency" ? "agency" : "client"}`}>
+                <div className="chat-bubble">
+                  {r.body}
+                  <span className="chat-time">{timeAgo(r.created_at)}</span>
                 </div>
-              ))}
-            </div>
-          )}
+              </div>
+            ))}
+          </div>
 
           {/* Reply Input */}
           {comment.status === "open" && (
             <div className="reply-section">
-              <textarea
-                className="reply-textarea"
-                value={reply}
-                onChange={e => setReply(e.target.value)}
-                onKeyDown={handleKeyDown}
-                placeholder="Reply to client… (⌘+Enter to send)"
-                rows={2}
-              />
-              <div className="reply-actions">
+              <div className="reply-input-wrapper">
+                <textarea
+                  className="reply-textarea"
+                  value={reply}
+                  onChange={e => setReply(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Type a reply... (⌘+Enter)"
+                  rows={1}
+                  style={{ minHeight: "32px" }}
+                />
                 <button
-                  className="btn-reply"
+                  className="chat-send-btn"
                   onClick={sendReply}
                   disabled={sending || !reply.trim()}
+                  title="Send Reply"
                 >
-                  {sending ? "Sending…" : "Reply"}
-                </button>
-                <button className="btn-resolve" onClick={onResolve} style={{ display: "inline-flex", alignItems: "center", gap: "4px" }}>
-                  <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-check"><polyline points="20 6 9 17 4 12"/></svg>
-                  Resolve
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" x2="11" y1="2" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                 </button>
               </div>
+              <button className="chat-resolve-btn" onClick={onResolve} title="Mark as Done">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--green)" }}><polyline points="20 6 9 17 4 12"/></svg>
+                Done
+              </button>
             </div>
           )}
         </>
