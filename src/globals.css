@@ -7,30 +7,64 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* ─────────────────────────────────────────────
+   BASE: Map to Framer native color tokens.
+   These vars are automatically updated by Framer
+   when the user switches light / dark mode.
+───────────────────────────────────────────── */
 :root {
-  /* Map custom variables to Framer native theme variables */
-  --bg:         var(--framer-color-bg, #0c0c0f);
-  --surface:    var(--framer-color-bg-secondary, #161620);
-  --surface2:   var(--framer-color-bg-tertiary, #1f1f2e);
-  --border:     var(--framer-color-divider, rgba(255, 255, 255, 0.08));
-  --border-hi:  var(--framer-color-divider, rgba(255, 255, 255, 0.14));
-  --text:       var(--framer-color-text, #f5f5f7);
-  --text-sub:   var(--framer-color-text-secondary, #8a8a93);
-  --accent:     var(--framer-color-tint, #8b5cf6);
-  --accent-dim: var(--framer-color-tint-dimmed, rgba(139, 92, 246, 0.15));
-  --accent-dark: var(--framer-color-tint-dark, #6d28d9);
-  
-  /* System States */
-  --green:      #22c55e;
-  --green-dim:  rgba(34, 197, 94, 0.15);
-  --red:        #ef4444;
-  --red-dim:    rgba(239, 68, 68, 0.15);
-  --yellow:     #f59e0b;
-  --yellow-dim: rgba(245, 158, 11, 0.15);
-  
-  --radius:     8px;
-  --radius-lg:  12px;
-  --font:       "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --bg:          var(--framer-color-bg);
+  --surface:     var(--framer-color-bg-secondary);
+  --surface2:    var(--framer-color-bg-tertiary);
+  --border:      var(--framer-color-divider);
+  --border-hi:   var(--framer-color-divider);
+  --text:        var(--framer-color-text);
+  --text-sub:    var(--framer-color-text-secondary);
+  --text-ter:    var(--framer-color-text-tertiary);
+  --accent:      var(--framer-color-tint);
+  --accent-dim:  var(--framer-color-tint-dimmed);
+  --accent-dark: var(--framer-color-tint-dark);
+
+  /* State colours — dark defaults, overridden per theme below */
+  --green:       #22c55e;
+  --green-dim:   rgba(34, 197, 94, 0.15);
+  --green-border:rgba(34, 197, 94, 0.25);
+  --red:         #ef4444;
+  --red-dim:     rgba(239, 68, 68, 0.15);
+  --red-border:  rgba(239, 68, 68, 0.25);
+  --yellow:      #f59e0b;
+  --yellow-dim:  rgba(245, 158, 11, 0.15);
+  --yellow-border:rgba(245, 158, 11, 0.25);
+
+  --radius:    8px;
+  --radius-lg: 12px;
+  --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ─── DARK MODE ─────────────────────────────── */
+[data-framer-theme="dark"] {
+  --green:        #22c55e;
+  --green-dim:    rgba(34, 197, 94, 0.15);
+  --green-border: rgba(34, 197, 94, 0.3);
+  --red:          #ef4444;
+  --red-dim:      rgba(239, 68, 68, 0.15);
+  --red-border:   rgba(239, 68, 68, 0.3);
+  --yellow:       #f59e0b;
+  --yellow-dim:   rgba(245, 158, 11, 0.15);
+  --yellow-border:rgba(245, 158, 11, 0.3);
+}
+
+/* ─── LIGHT MODE ────────────────────────────── */
+[data-framer-theme="light"] {
+  --green:        #16a34a;
+  --green-dim:    rgba(22, 163, 74, 0.1);
+  --green-border: rgba(22, 163, 74, 0.25);
+  --red:          #dc2626;
+  --red-dim:      rgba(220, 38, 38, 0.08);
+  --red-border:   rgba(220, 38, 38, 0.2);
+  --yellow:       #d97706;
+  --yellow-dim:   rgba(217, 119, 6, 0.1);
+  --yellow-border:rgba(217, 119, 6, 0.25);
 }
 
 
@@ -178,11 +212,11 @@ hr, .framer-divider {
 .tab-switch .tab-btn.active {
   background: var(--surface2);
   color: var(--text);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
 
-.auth-error { color: var(--red); background: var(--red-dim); border: 1px solid rgba(255,59,48,0.2); padding: 8px 10px; border-radius: var(--radius); font-size: 11px; }
-.auth-success { color: var(--green); background: var(--green-dim); border: 1px solid rgba(52,199,89,0.2); padding: 8px 10px; border-radius: var(--radius); font-size: 11px; }
+.auth-error { color: var(--red); background: var(--red-dim); border: 1px solid var(--red-border); padding: 8px 10px; border-radius: var(--radius); font-size: 11px; }
+.auth-success { color: var(--green); background: var(--green-dim); border: 1px solid var(--green-border); padding: 8px 10px; border-radius: var(--radius); font-size: 11px; }
 
 .setup-footer { font-size: 10px; color: var(--text-sub); text-align: center; line-height: 1.4; }
 
@@ -314,7 +348,7 @@ button:disabled {
 .badge-open {
   background: var(--red-dim);
   color: var(--red);
-  border: 1px solid rgba(255,59,48,0.2);
+  border: 1px solid var(--red-border);
   padding: 1px 6px;
   border-radius: 100px;
   font-size: 9px;
@@ -331,8 +365,8 @@ button:disabled {
   border: 1px solid var(--border);
 }
 .plan-chip.plan-free   { background: var(--surface); color: var(--text-sub); }
-.plan-chip.plan-pro    { background: var(--accent-dim); color: var(--accent); border-color: rgba(0,122,255,0.2); }
-.plan-chip.plan-agency { background: var(--yellow-dim); color: var(--yellow); border-color: rgba(255,149,0,0.2); }
+.plan-chip.plan-pro    { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-dim); }
+.plan-chip.plan-agency { background: var(--yellow-dim); color: var(--yellow); border-color: var(--yellow-border); }
 
 /* Install Banner */
 .install-banner {
@@ -341,8 +375,8 @@ button:disabled {
   justify-content: space-between;
   gap: 8px;
   padding: 8px 12px;
-  background: linear-gradient(180deg, var(--accent-dim), transparent);
-  border-bottom: 1px solid rgba(0,122,255,0.2);
+  background: var(--accent-dim);
+  border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
 .install-banner-text { display: flex; align-items: flex-start; gap: 6px; flex: 1; }
@@ -356,7 +390,7 @@ button:disabled {
   justify-content: space-between;
   padding: 4px 12px;
   background: var(--green-dim);
-  border-bottom: 1px solid rgba(52,199,89,0.2);
+  border-bottom: 1px solid var(--green-border);
   font-size: 11px;
   color: var(--green);
   font-weight: 500;
@@ -418,7 +452,7 @@ button:disabled {
   cursor: pointer;
   transition: all 0.15s;
 }
-.filter-pill.active { background: var(--accent-dim); border-color: rgba(0,122,255,0.3); color: var(--accent); }
+.filter-pill.active { background: var(--accent-dim); border-color: var(--accent-dim); color: var(--accent); }
 .filter-pill:hover:not(.active) { border-color: var(--border-hi); color: var(--text); }
 
 .comments-list {
@@ -458,8 +492,8 @@ button:disabled {
 .comment-card:hover { border-color: var(--border-hi); }
 .comment-card.resolved {
   opacity: 0.85;
-  border-color: rgba(52, 199, 89, 0.25);
-  background: rgba(52, 199, 89, 0.02);
+  border-color: var(--green-border);
+  background: var(--green-dim);
 }
 
 .comment-header {
@@ -630,8 +664,8 @@ button:disabled {
   border: 1px solid var(--border);
 }
 .plan-badge.plan-free   { background: var(--bg); color: var(--text-sub); }
-.plan-badge.plan-pro    { background: var(--accent-dim); color: var(--accent); border-color: rgba(0,122,255,0.2); }
-.plan-badge.plan-agency { background: var(--yellow-dim); color: var(--yellow); border-color: rgba(255,149,0,0.2); }
+.plan-badge.plan-pro    { background: var(--accent-dim); color: var(--accent); border-color: var(--accent-dim); }
+.plan-badge.plan-agency { background: var(--yellow-dim); color: var(--yellow); border-color: var(--yellow-border); }
 
 /* Pricing Grid */
 .pricing-grid {
@@ -644,8 +678,8 @@ button:disabled {
   padding: 10px;
 }
 .pricing-card.pricing-highlight {
-  border-color: rgba(0,122,255,0.3);
-  background: linear-gradient(180deg, var(--accent-dim), transparent);
+  border-color: var(--accent-dim);
+  background: var(--accent-dim);
 }
 .pricing-card.pricing-current { border-color: var(--green); }
 
