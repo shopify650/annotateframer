@@ -493,10 +493,10 @@ export function Settings({
             {showRefund && (
               <div style={{ padding: "0 12px 12px", fontSize: "10px", color: "var(--text-sub)", lineHeight: "1.4", borderTop: "1px solid var(--border)" }}>
                 <p style={{ margin: "8px 0 0" }}>
-                  We stand by the quality of AnnotateFrame. If you run into technical issues or the plugin does not work as advertised on your Framer sites, we offer a **100% money-back guarantee within 14 days** of purchase.
+                  We stand by the quality of AnnotateFrame. If you run into technical issues or the plugin does not work as advertised on your Framer sites, we offer an **80% money-back guarantee within 14 days** of purchase.
                 </p>
                 <p style={{ margin: "6px 0 0" }}>
-                  To request a refund, please open a support chat directly in your Whop checkout account or email us at support@annotateframe.com.
+                  To request a refund, please <a href="https://whop.com/joined/buildhaus-templates/" target="_blank" style={{ color: "var(--accent)", textDecoration: "underline" }}>open a support chat directly in your Whop checkout account</a> or email us at support@annotateframe.com.
                 </p>
               </div>
             )}
