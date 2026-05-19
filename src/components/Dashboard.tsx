@@ -769,6 +769,7 @@ async function handleCreateProject() {
                 token={project.invite_token}
                 projectId={project.id}
                 siteUrl={project.site_url}
+                plan={plan}
               />
             )}
 

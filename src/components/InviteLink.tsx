@@ -6,9 +6,10 @@ interface Props {
   token: string
   projectId: string
   siteUrl: string | null
+  plan?: string
 }
 
-export function InviteLink({ token, projectId, siteUrl }: Props) {
+export function InviteLink({ token, projectId, siteUrl, plan = "free" }: Props) {
   const [copied, setCopied] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
 
@@ -25,6 +26,10 @@ export function InviteLink({ token, projectId, siteUrl }: Props) {
   }
 
   async function regenerateToken() {
+    if (plan === "free") {
+      framer.notify("⚠️ Regenerating review tokens is a Pro feature! Upgrade to revoke links.", { variant: "info" })
+      return
+    }
     setRegenerating(true)
     const newToken = Array.from(crypto.getRandomValues(new Uint8Array(16)))
       .map(b => b.toString(16).padStart(2, "0"))
@@ -114,10 +119,26 @@ export function InviteLink({ token, projectId, siteUrl }: Props) {
         className="btn-ghost btn-sm"
         onClick={regenerateToken}
         disabled={regenerating}
-        style={{ display: "inline-flex", alignItems: "center", gap: "6px", justifyContent: "center" }}
+        style={{ 
+          display: "inline-flex", 
+          alignItems: "center", 
+          gap: "6px", 
+          justifyContent: "center",
+          opacity: plan === "free" ? 0.75 : 1,
+          cursor: plan === "free" ? "default" : "pointer"
+        }}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-refresh-cw"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
-        {regenerating ? "Regenerating…" : "Regenerate token (revokes old link)"}
+        {plan === "free" ? (
+          <>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            <span>🔒 Regenerate token (Pro Plan)</span>
+          </>
+        ) : (
+          <>
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-refresh-cw"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>
+            <span>{regenerating ? "Regenerating…" : "Regenerate token (revokes old link)"}</span>
+          </>
+        )}
       </button>
     </div>
   )
