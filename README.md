@@ -76,7 +76,7 @@ supabase secrets set RESEND_API_KEY=re_your_key
 
 ---
 
-## 💰 Pricing (via Lemon Squeezy)
+## 💰 Pricing (via Whop)
 
 | Plan   | Price  | Projects | Comments |
 |--------|--------|----------|----------|
@@ -85,6 +85,8 @@ supabase secrets set RESEND_API_KEY=re_your_key
 | Agency | $59/mo | ∞        | ∞ + team |
 
 **200 Pro users = $5,000 MRR** 🚀
+
+🛒 **Checkout:** https://whop.com/buildhaus-templates/annotate-framer-15/
 
 ---
 

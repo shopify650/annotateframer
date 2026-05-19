@@ -41,7 +41,7 @@ export function App() {
     return (
       <div className="loading-screen">
         <div className="framer-spinner-large" />
-        <p>Loading clientflow…</p>
+        <p>Loading AnnotateFrame…</p>
       </div>
     )
   }

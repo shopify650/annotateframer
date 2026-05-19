@@ -43,7 +43,7 @@ export function Setup({ onAuth }: Props) {
           <rect width="24" height="24" rx="6" fill="var(--accent)"/>
           <path d="M7 12.5L10 15.5L17 8.5" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"/>
         </svg>
-        <span className="logo-text">clientflow</span>
+        <span className="logo-text">Remark</span>
       </div>
       <p className="setup-tagline">Client feedback, automated screenshots, zero hassle.</p>
 

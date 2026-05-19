@@ -40,9 +40,13 @@ export function Dashboard({ session, onSignOut }: Props) {
   useEffect(() => {
     loadOrCreateProject()
     checkInstallStatus()
-    // Store plan in sessionStorage for client script
-    sessionStorage.setItem("af_plan", plan)
+    silentSyncSubscription()
   }, [])
+
+  // Store plan in sessionStorage for client script
+  useEffect(() => {
+    sessionStorage.setItem("af_plan", plan)
+  }, [plan])
 
   async function loadOrCreateProject() {
     setLoading(true)
@@ -72,6 +76,92 @@ export function Dashboard({ session, onSignOut }: Props) {
   async function checkInstallStatus() {
     const ok = await isScriptInstalled()
     setInstalled(ok)
+  }
+
+  async function silentSyncSubscription() {
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      if (!currentSession) return
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-membership`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${currentSession.access_token}`
+        }
+      })
+
+      if (response.ok) {
+        const res = await response.json()
+        if (res.success) {
+          // If the plan changed in the background, reload projects to update UI plan badge!
+          const { data: updatedProjects } = await supabase
+            .from("projects")
+            .select("*")
+            .eq("user_id", session.user.id)
+            .order("created_at", { ascending: false })
+
+          if (updatedProjects && updatedProjects.length > 0) {
+            setProjects(updatedProjects)
+            // Sync active project plan state
+            const matched = updatedProjects.find(p => p.id === (project?.id || updatedProjects[0].id))
+            if (matched && matched.plan !== (project?.plan ?? "free")) {
+              setProject(matched)
+              framer.notify(`Subscription status synchronized: ${matched.plan.toUpperCase()} plan active.`, { variant: "info" })
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[AF] Silent subscription sync failed:", err)
+    }
+  }
+
+  function handleExportComments() {
+    // Upsell check: block if they are not on the agency plan!
+    if (plan !== "agency") {
+      framer.notify("Exporting comments is exclusive to the AGENCY plan. Upgrade to export review checklists!", { variant: "warning" })
+      return
+    }
+
+    if (comments.length === 0) {
+      framer.notify("No comments available to export in this project.", { variant: "info" })
+      return
+    }
+
+    try {
+      // 1. Define CSV headers
+      const headers = ["Comment ID", "Content", "Status", "Created At", "Coordinates (X%)", "Coordinates (Y%)", "Device"]
+      
+      // 2. Map comments to rows (sanitizing commas and quotes)
+      const rows = comments.map(c => [
+        c.id,
+        `"${(c.text || "").replace(/"/g, '""')}"`,
+        c.resolved ? "Resolved" : "Open",
+        new Date(c.created_at).toLocaleString(),
+        `${c.x_percent}%`,
+        `${c.y_percent}%`,
+        c.device || "Desktop"
+      ])
+
+      // 3. Construct CSV raw content
+      const csvContent = [headers.join(","), ...rows.map(r => r.join(","))].join("\n")
+
+      // 4. Create and trigger download
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement("a")
+      link.setAttribute("href", url)
+      link.setAttribute("download", `remark_comments_${project?.name || "project"}.csv`)
+      link.style.visibility = "hidden"
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      
+      framer.notify("Comments checklist exported as CSV successfully!", { variant: "success" })
+    } catch (err) {
+      framer.notify("Failed to export comments.", { variant: "error" })
+    }
   }
 
   // Create new project
@@ -215,7 +305,7 @@ async function handleCreateProject() {
         import.meta.env.VITE_SUPABASE_ANON_KEY
       )
       setInstalled(true)
-      framer.notify("clientflow comments are now active!", { variant: "success", durationMs: 3000 })
+      framer.notify("AnnotateFrame comments are now active!", { variant: "success", durationMs: 3000 })
     } catch (err) {
       console.error("[AF] Install failed:", err)
       const errMsg = (err as Error).message || String(err)
@@ -268,7 +358,7 @@ async function handleCreateProject() {
       {/* ── main content view ── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         
-        {/* TAB: PROJECTS (Main view showing the clientflow specs) */}
+        {/* TAB: PROJECTS (Main view showing the AnnotateFrame specs) */}
         {tab === "projects" && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
             
@@ -360,19 +450,19 @@ async function handleCreateProject() {
                   </button>
                 </div>
 
-                <div style={{ marginTop: "10px", cursor: "pointer" }} onClick={() => {
+                <div style={{ marginTop: "12px", cursor: "pointer", display: "flex", flexDirection: "column", gap: "2px" }} onClick={() => {
                   const baseUrl = project.site_url ? (project.site_url.startsWith("http") ? project.site_url : `https://${project.site_url}`) : ""
                   if (baseUrl) {
                     const reviewUrl = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}af_token=${project.invite_token}`
                     window.open(reviewUrl, "_blank")
                   }
                 }}>
-                  <span className="project-card-title">
+                  <div className="project-card-title">
                     {project.name}
-                  </span>
-                  <span className="project-card-url">
-                    {project.site_url || "clientflow.framer.website"}
-                  </span>
+                  </div>
+                  <div className="project-card-url" style={{ opacity: 0.7 }}>
+                    {project.site_url || "remark.framer.website"}
+                  </div>
                 </div>
               </div>
             )}
@@ -396,18 +486,42 @@ async function handleCreateProject() {
             {/* Comments listing feed */}
             <div className="comments-tab" style={{ flex: 1 }}>
               {/* Filter pills */}
-              <div className="filter-bar" style={{ padding: "6px 12px" }}>
-                {(["open", "resolved", "all"] as const).map(f => (
-                  <button
-                    key={f}
-                    className={`filter-pill ${filter === f ? "active" : ""}`}
-                    onClick={() => setFilter(f)}
-                  >
-                    {f === "open" && `Open (${openCount})`}
-                    {f === "resolved" && `Done (${resolvedCount})`}
-                    {f === "all" && `All (${comments.length})`}
-                  </button>
-                ))}
+              <div className="filter-bar" style={{ padding: "6px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", gap: "4px" }}>
+                  {(["open", "resolved", "all"] as const).map(f => (
+                    <button
+                      key={f}
+                      className={`filter-pill ${filter === f ? "active" : ""}`}
+                      onClick={() => setFilter(f)}
+                    >
+                      {f === "open" && `Open (${openCount})`}
+                      {f === "resolved" && `Done (${resolvedCount})`}
+                      {f === "all" && `All (${comments.length})`}
+                    </button>
+                  ))}
+                </div>
+                
+                {/* Premium CSV Export Button */}
+                <button
+                  onClick={handleExportComments}
+                  className="filter-pill"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px",
+                    padding: "3px 8px",
+                    background: "transparent",
+                    borderColor: "var(--border)",
+                    color: "var(--text-sub)",
+                    fontSize: "10px",
+                    fontWeight: "600",
+                    cursor: "pointer"
+                  }}
+                  title="Export comments to CSV (Agency Plan)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Export
+                </button>
               </div>
 
               {/* Comments list feed scrollable */}

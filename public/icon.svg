@@ -1,4 +1,28 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 30 30">
-  <path fill="#f3f3f3" d="M0 0h30v30H0Z"/>
-  <path fill="transparent" stroke="#999" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m12 11-4 4 4 4m6-8 4 4-4 4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <!-- Smoothly rounded box with beautiful premium gradient -->
+  <rect width="512" height="512" rx="128" fill="url(#remark-gradient)"/>
+  
+  <defs>
+    <linearGradient id="remark-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7C3AED" /> <!-- Vibrant Violet -->
+      <stop offset="100%" stop-color="#2563EB" /> <!-- Sleek Royal Blue -->
+    </linearGradient>
+    
+    <!-- Subtle drop shadow for the icon content -->
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="10" stdDeviation="14" flood-color="#050510" flood-opacity="0.25"/>
+    </filter>
+  </defs>
+
+  <!-- Pinned Comment Bubble Symbol representing modern annotations -->
+  <g filter="url(#shadow)">
+    <!-- Speech bubble body with smooth corners -->
+    <path fill="#FFFFFF" d="M140 120h232c22.1 0 40 17.9 40 40v140c0 22.1-17.9 40-40 40H220l-72 72v-72h-8c-22.1 0-40-17.9-40-40V160c0-22.1 17.9-40 40-40Z"/>
+    
+    <!-- Stylized feedback Pin Dot (accent violet) -->
+    <circle cx="256" cy="230" r="28" fill="#7C3AED" />
+    
+    <!-- Accent ring around the pin dot representing coordinates / annotation -->
+    <circle cx="256" cy="230" r="46" fill="none" stroke="#7C3AED" stroke-width="5" stroke-dasharray="10 8" opacity="0.8" />
+  </g>
 </svg>

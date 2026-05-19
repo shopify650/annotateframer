@@ -15,18 +15,18 @@ export async function injectAnnotateFrameScript(
   const scriptUrl = "https://project-pymvu.vercel.app/annotateframe.min.js"
 
   const html = `
-<!-- AnnotateFrame Start -->
+<!-- Remark Start -->
 <script>
   window.ANNOTATEFRAME_PROJECT_ID = "${projectId}";
   window.ANNOTATEFRAME_SUPABASE_URL = "${supabaseUrl}";
   window.ANNOTATEFRAME_ANON_KEY = "${supabaseAnonKey}";
 </script>
 <script src="${scriptUrl}" defer></script>
-<!-- AnnotateFrame End -->
+<!-- Remark End -->
 `.trim()
 
   await framer.setCustomCode({ html, location: "bodyEnd" })
-  console.log("[AnnotateFrame] ✅ Script injected successfully")
+  console.log("[Remark] ✅ Script injected successfully")
 }
 
 /**
@@ -34,7 +34,7 @@ export async function injectAnnotateFrameScript(
  */
 export async function removeAnnotateFrameScript(): Promise<void> {
   await framer.setCustomCode({ html: null, location: "bodyEnd" })
-  console.log("[AnnotateFrame] Script removed")
+  console.log("[Remark] Script removed")
 }
 
 /**

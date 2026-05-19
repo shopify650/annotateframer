@@ -39,12 +39,10 @@ const PLANS = [
     features: [
       "Unlimited projects",
       "Unlimited comments",
-      "Email notifications",
       "Reply to clients",
-      "Comment export",
     ],
     highlight: true,
-    checkoutUrl: "https://annotateframe.lemonsqueezy.com/checkout/buy/PRO_VARIANT_ID",
+    checkoutUrl: "https://whop.com/buildhaus-templates/annotate-framer-15/",
   },
   {
     id: "agency",
@@ -52,6 +50,7 @@ const PLANS = [
     price: "Coming Soon",
     features: [
       "Everything in Pro",
+      "CSV comment export",
       "3 team seats",
       "White-label modal",
       "Zapier / webhooks",
@@ -86,6 +85,53 @@ export function Settings({
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
+  const [restoring, setRestoring] = useState(false)
+
+  async function handleRestorePurchase() {
+    setRestoring(true)
+    try {
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      if (!currentSession) throw new Error("No session found.")
+
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/verify-membership`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${currentSession.access_token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error("Failed to verify membership.")
+      }
+
+      const res = await response.json()
+      if (res.success) {
+        if (res.active) {
+          framer.notify("Pro plan restored! Refreshing project...", { variant: "success", durationMs: 4000 })
+        } else {
+          framer.notify(res.message, { variant: "warning", durationMs: 4000 })
+        }
+
+        // ALWAYS refresh the local project data to instantly update the plan badge!
+        const { data: updatedProject } = await supabase
+          .from("projects")
+          .select("*")
+          .eq("id", project?.id)
+          .single()
+        if (updatedProject) {
+          onProjectUpdate(updatedProject)
+        }
+      } else {
+        framer.notify(res.error || "Could not restore purchase.", { variant: "error" })
+      }
+    } catch (err: any) {
+      console.error("[AF] Restore purchase failed:", err)
+      framer.notify(err.message || "Failed to restore purchase.", { variant: "error" })
+    } finally {
+      setRestoring(false)
+    }
+  }
 
   // Sync state if active project changes
   useEffect(() => {
@@ -146,7 +192,7 @@ export function Settings({
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               <div>
                 <strong>Script not installed</strong>
-                <p style={{ fontSize: "9px" }}>Inject clientflow script into your live site to collect feedback.</p>
+                <p style={{ fontSize: "9px" }}>Inject AnnotateFrame script into your live site to collect feedback.</p>
               </div>
             </div>
             <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px" }} onClick={onInstall} disabled={installing}>
@@ -245,9 +291,19 @@ export function Settings({
           <span className="settings-label">Plan</span>
           <span className={`plan-badge plan-${plan}`}>{plan.toUpperCase()}</span>
         </div>
-        <button className="btn-ghost btn-sm" onClick={onSignOut}>
-          Sign Out
-        </button>
+        <div style={{ display: "flex", gap: "8px", marginTop: "12px" }}>
+          <button className="btn-ghost btn-sm" onClick={onSignOut}>
+            Sign Out
+          </button>
+          <button 
+            className="btn-ghost btn-sm" 
+            onClick={handleRestorePurchase} 
+            disabled={restoring}
+            style={{ color: "var(--accent)", borderColor: "var(--accent)" }}
+          >
+            {restoring ? "Syncing..." : plan === "pro" || plan === "agency" ? "Sync Subscription" : "Restore Purchase"}
+          </button>
+        </div>
       </section>
 
       {/* Project Section */}
