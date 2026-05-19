@@ -376,6 +376,9 @@ export function Settings({
       {/* Pricing Section */}
       <section className="settings-section">
         <h4 className="settings-section-title">Upgrade Plan</h4>
+        <p style={{ fontSize: "10.5px", color: "var(--text-sub)", margin: "-4px 0 12px", lineHeight: "1.4" }}>
+          ⚠️ <strong>Note:</strong> Please use the same email when purchasing on Whop that you use in this plugin ({session.user.email}) to ensure automatic activation.
+        </p>
         <div className="pricing-grid">
           {PLANS.map(p => (
             <div key={p.id} className={`pricing-card ${p.highlight ? "pricing-highlight" : ""} ${plan === p.id ? "pricing-current" : ""}`}>
