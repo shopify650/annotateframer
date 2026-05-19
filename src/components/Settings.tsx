@@ -21,6 +21,7 @@ interface Props {
   showManualSetup: boolean
   onHideManualSetup: () => void
   permissionError: string | null
+  detectedSiteUrl?: string
 }
 
 const PLANS = [
@@ -78,7 +79,8 @@ export function Settings({
   onRemove,
   showManualSetup,
   onHideManualSetup,
-  permissionError
+  permissionError,
+  detectedSiteUrl = ""
 }: Props) {
   const [siteName, setSiteName] = useState(project?.name ?? "")
   const [siteUrl, setSiteUrl] = useState(project?.site_url ?? "")
@@ -88,6 +90,11 @@ export function Settings({
   const [restoring, setRestoring] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [showRefund, setShowRefund] = useState(false)
+
+  const clean = (url: string) => {
+    return url.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "").trim().toLowerCase()
+  }
+  const isMismatched = plan === "free" && !!detectedSiteUrl && !!project?.site_url && clean(project.site_url) !== clean(detectedSiteUrl)
 
   async function handleRestorePurchase() {
     setRestoring(true)
@@ -188,7 +195,27 @@ export function Settings({
       <section className="settings-section">
         <h4 className="settings-section-title">Site Script</h4>
         
-        {!installed && (
+        {isMismatched && !installed && (
+          <div className="install-banner" style={{ borderRadius: "10px", border: "1px solid var(--red-dim)", background: "var(--red-dim)", marginBottom: "10px" }}>
+            <div className="install-banner-text">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--red)" }}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+              <div>
+                <strong style={{ color: "var(--red)" }}>Mismatched Project Domain</strong>
+                <p style={{ fontSize: "9px" }}>This Free account is locked to <strong>{project?.site_url}</strong>. You cannot install scripts on this new website.</p>
+              </div>
+            </div>
+            <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px", background: "var(--red)", borderColor: "var(--red)", color: "#fff" }} onClick={() => {
+              const pricingGrid = document.querySelector(".pricing-grid")
+              if (pricingGrid) {
+                pricingGrid.scrollIntoView({ behavior: "smooth" })
+              }
+            }}>
+              Upgrade
+            </button>
+          </div>
+        )}
+
+        {!isMismatched && !installed && (
           <div className="install-banner" style={{ borderRadius: "10px", border: "1px solid var(--accent-dim)", marginBottom: "10px" }}>
             <div className="install-banner-text">
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
@@ -213,7 +240,7 @@ export function Settings({
           </div>
         )}
 
-        {(showManualSetup || permissionError) && project && (
+        {(showManualSetup || permissionError) && project && !isMismatched && (
           <div className="manual-setup-card" style={{
             padding: "12px",
             borderRadius: "10px",
@@ -342,6 +369,11 @@ export function Settings({
             {plan === "free" && !siteUrl && (
               <span style={{ fontSize: "9.5px", color: "var(--red)", marginTop: "4px", lineHeight: "1.4" }}>
                 ⚠️ Please publish your Framer site to automatically detect and lock your review URL!
+              </span>
+            )}
+            {isMismatched && (
+              <span style={{ fontSize: "9.5px", color: "var(--red)", marginTop: "4px", lineHeight: "1.4" }}>
+                ⚠️ Your Free plan is permanently locked to <strong>{project?.site_url}</strong>. You are currently running this inside <strong>{detectedSiteUrl}</strong>. To link this new website, please upgrade to Pro.
               </span>
             )}
           </div>

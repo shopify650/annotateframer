@@ -27,6 +27,7 @@ export function Dashboard({ session, onSignOut }: Props) {
   const [currentMonthCommentCount, setCurrentMonthCommentCount] = useState(0)
   const [commentLimitWarning, setCommentLimitWarning] = useState(false)
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null)
+  const [detectedSiteUrl, setDetectedSiteUrl] = useState("")
   const [lastViewedTime, setLastViewedTime] = useState<string>(() => {
     return localStorage.getItem("af_last_viewed_default") || new Date().toISOString()
   })
@@ -126,6 +127,14 @@ export function Dashboard({ session, onSignOut }: Props) {
     }
   }
 
+  const isDomainMismatched = useCallback(() => {
+    if (plan !== "free" || !project?.site_url || !detectedSiteUrl) return false
+    const clean = (url: string) => {
+      return url.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "").trim().toLowerCase()
+    }
+    return clean(project.site_url) !== clean(detectedSiteUrl)
+  }, [plan, project, detectedSiteUrl])
+
   // Load project list & install status
   useEffect(() => {
     loadOrCreateProject()
@@ -156,13 +165,16 @@ export function Dashboard({ session, onSignOut }: Props) {
       console.warn("[AF] Could not detect publish info:", err)
     }
 
+    setDetectedSiteUrl(detectedUrl)
+
     if (existing && existing.length > 0) {
       setProjects(existing)
       const firstProj = existing[0]
       activeProj = firstProj
 
-      // For FREE users, auto-sync and lock URL matching the current Framer site
-      if (firstProj.plan === "free" && detectedUrl && firstProj.site_url !== detectedUrl) {
+      // For FREE users, auto-sync the URL ONLY when the site_url is empty!
+      // Once it is set/filled, it is locked permanently to that specific Framer project.
+      if (firstProj.plan === "free" && detectedUrl && !firstProj.site_url) {
         const { data: updated } = await supabase
           .from("projects")
           .update({ site_url: detectedUrl })
@@ -627,6 +639,22 @@ async function handleCreateProject() {
               </div>
             )}
 
+            {/* Mismatched Project Domain Banner for Free Plan */}
+            {isDomainMismatched() && (
+              <div className="install-banner" style={{ margin: "0 12px 10px", borderRadius: "10px", border: "1px solid var(--red-dim)", background: "var(--red-dim)" }}>
+                <div className="install-banner-text">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--red)" }}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+                  <div>
+                    <strong style={{ color: "var(--red)" }}>Mismatched Project Domain</strong>
+                    <p style={{ fontSize: "9px" }}>Your Free plan is permanently locked to <strong>{project?.site_url}</strong>. Upgrade to Pro to use AnnotateFrame on this new site.</p>
+                  </div>
+                </div>
+                <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px", background: "var(--red)", borderColor: "var(--red)", color: "#fff" }} onClick={() => setTab("settings")}>
+                  Upgrade
+                </button>
+              </div>
+            )}
+
             {/* Monthly Limit Warning Banner for Free Plan */}
             {plan === "free" && currentMonthCommentCount >= 10 && (
               <div className="install-banner" style={{ margin: "0 12px 10px", borderRadius: "10px", border: "1px solid var(--yellow-dim)", background: "var(--yellow-dim)" }}>
@@ -759,6 +787,7 @@ async function handleCreateProject() {
             projects={projects}
             plan={plan}
             autoClean={autoClean}
+            detectedSiteUrl={detectedSiteUrl}
             onAutoCleanChange={(val) => {
               setAutoClean(val)
               if (project) localStorage.setItem(`af_autoclean_${project.id}`, String(val))
