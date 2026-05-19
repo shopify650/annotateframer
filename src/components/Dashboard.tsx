@@ -136,12 +136,12 @@ export function Dashboard({ session, onSignOut }: Props) {
       // 2. Map comments to rows (sanitizing commas and quotes)
       const rows = comments.map(c => [
         c.id,
-        `"${(c.text || "").replace(/"/g, '""')}"`,
-        c.resolved ? "Resolved" : "Open",
+        `"${(c.body || "").replace(/"/g, '""')}"`,
+        c.status === "resolved" ? "Resolved" : "Open",
         new Date(c.created_at).toLocaleString(),
         `${c.x_percent}%`,
         `${c.y_percent}%`,
-        c.device || "Desktop"
+        c.browser || "Desktop"
       ])
 
       // 3. Construct CSV raw content
