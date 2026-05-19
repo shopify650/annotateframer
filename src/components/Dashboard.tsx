@@ -158,14 +158,15 @@ export function Dashboard({ session, onSignOut }: Props) {
 
     if (existing && existing.length > 0) {
       setProjects(existing)
-      activeProj = existing[0]
+      const firstProj = existing[0]
+      activeProj = firstProj
 
       // For FREE users, auto-sync and lock URL matching the current Framer site
-      if (activeProj.plan === "free" && detectedUrl && activeProj.site_url !== detectedUrl) {
+      if (firstProj.plan === "free" && detectedUrl && firstProj.site_url !== detectedUrl) {
         const { data: updated } = await supabase
           .from("projects")
           .update({ site_url: detectedUrl })
-          .eq("id", activeProj.id)
+          .eq("id", firstProj.id)
           .select()
           .single()
         if (updated) {
