@@ -86,6 +86,8 @@ export function Settings({
   const [saved, setSaved] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [restoring, setRestoring] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
+  const [showRefund, setShowRefund] = useState(false)
 
   async function handleRestorePurchase() {
     setRestoring(true)
@@ -403,6 +405,102 @@ export function Settings({
               ) : null}
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Legal & Policies Section */}
+      <section className="settings-section" style={{ borderTop: "1px solid var(--border)", paddingTop: "16px", marginTop: "16px" }}>
+        <h4 className="settings-section-title">Policies</h4>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+          {/* Privacy Policy */}
+          <div style={{ background: "var(--surface2)", borderRadius: "var(--radius)", border: "1px solid var(--border)", overflow: "hidden" }}>
+            <button 
+              onClick={() => setShowPrivacy(!showPrivacy)}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                padding: "10px 12px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                color: "var(--text)",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "11px",
+                outline: "none"
+              }}
+            >
+              <span>Privacy Policy</span>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="12" 
+                height="12" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2.5"
+                style={{ transform: showPrivacy ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+              >
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            {showPrivacy && (
+              <div style={{ padding: "0 12px 12px", fontSize: "10px", color: "var(--text-sub)", lineHeight: "1.4", borderTop: "1px solid var(--border)" }}>
+                <p style={{ margin: "8px 0 0" }}>
+                  AnnotateFrame is dedicated to protecting your data. We collect commenting metrics (coordinates, comment body, viewport widths, and client names/emails) strictly to display visual pins on your Framer site and sync them to your dashboard.
+                </p>
+                <p style={{ margin: "6px 0 0" }}>
+                  All communications with Supabase are fully protected via Row Level Security (RLS). We never sell, track, or share your clients' personal data.
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Refund Policy */}
+          <div style={{ background: "var(--surface2)", borderRadius: "var(--radius)", border: "1px solid var(--border)", overflow: "hidden" }}>
+            <button 
+              onClick={() => setShowRefund(!showRefund)}
+              style={{
+                width: "100%",
+                background: "transparent",
+                border: "none",
+                padding: "10px 12px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                color: "var(--text)",
+                cursor: "pointer",
+                fontWeight: "600",
+                fontSize: "11px",
+                outline: "none"
+              }}
+            >
+              <span>Refund Policy</span>
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="12" 
+                height="12" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2.5"
+                style={{ transform: showRefund ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 0.2s" }}
+              >
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            {showRefund && (
+              <div style={{ padding: "0 12px 12px", fontSize: "10px", color: "var(--text-sub)", lineHeight: "1.4", borderTop: "1px solid var(--border)" }}>
+                <p style={{ margin: "8px 0 0" }}>
+                  We stand by the quality of AnnotateFrame. If you run into technical issues or the plugin does not work as advertised on your Framer sites, we offer a **100% money-back guarantee within 14 days** of purchase.
+                </p>
+                <p style={{ margin: "6px 0 0" }}>
+                  To request a refund, please open a support chat directly in your Whop checkout account or email us at support@annotateframe.com.
+                </p>
+              </div>
+            )}
+          </div>
         </div>
       </section>
     </div>
