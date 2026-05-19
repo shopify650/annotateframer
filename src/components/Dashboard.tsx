@@ -40,7 +40,6 @@ export function Dashboard({ session, onSignOut }: Props) {
   useEffect(() => {
     loadOrCreateProject()
     checkInstallStatus()
-    silentSyncSubscription()
   }, [])
 
   // Store plan in sessionStorage for client script
@@ -56,8 +55,11 @@ export function Dashboard({ session, onSignOut }: Props) {
       .eq("user_id", session.user.id)
       .order("created_at", { ascending: false })
 
+    let activeProj: Project | null = null
+
     if (existing && existing.length > 0) {
       setProjects(existing)
+      activeProj = existing[0]
       setProject(existing[0]) // Load the latest project
     } else {
       const { data: created } = await supabase
@@ -67,10 +69,16 @@ export function Dashboard({ session, onSignOut }: Props) {
         .single()
       if (created) {
         setProjects([created])
+        activeProj = created
         setProject(created)
       }
     }
     setLoading(false)
+
+    // Automatically check user plan when they open the plugin!
+    if (activeProj) {
+      silentSyncSubscription(activeProj)
+    }
   }
 
   async function checkInstallStatus() {
@@ -78,7 +86,7 @@ export function Dashboard({ session, onSignOut }: Props) {
     setInstalled(ok)
   }
 
-  async function silentSyncSubscription() {
+  async function silentSyncSubscription(activeProj: Project) {
     try {
       const { data: { session: currentSession } } = await supabase.auth.getSession()
       if (!currentSession) return
@@ -103,11 +111,13 @@ export function Dashboard({ session, onSignOut }: Props) {
 
           if (updatedProjects && updatedProjects.length > 0) {
             setProjects(updatedProjects)
-            // Sync active project plan state
-            const matched = updatedProjects.find(p => p.id === (project?.id || updatedProjects[0].id))
-            if (matched && matched.plan !== (project?.plan ?? "free")) {
+            // Sync active project plan state with absolute precision
+            const matched = updatedProjects.find(p => p.id === activeProj.id)
+            if (matched) {
               setProject(matched)
-              framer.notify(`Subscription status synchronized: ${matched.plan.toUpperCase()} plan active.`, { variant: "info" })
+              if (matched.plan !== activeProj.plan) {
+                framer.notify(`Subscription status updated: ${matched.plan.toUpperCase()} plan active.`, { variant: "success", durationMs: 4000 })
+              }
             }
           }
         }
