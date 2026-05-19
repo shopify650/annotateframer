@@ -74,16 +74,55 @@ export function Dashboard({ session, onSignOut }: Props) {
     }
   }, [tab, hasNewNotifications, project])
 
+  // Find the single comment that has the newest activity
+  const getNewestActiveComment = (): Comment | null => {
+    if (comments.length === 0) return null
+    let newestComment: Comment = comments[0]
+    let newestTime = 0
+
+    comments.forEach(c => {
+      const cTime = new Date(c.created_at).getTime()
+      if (cTime > newestTime) {
+        newestTime = cTime
+        newestComment = c
+      }
+
+      if (c.replies) {
+        c.replies.forEach(r => {
+          const rTime = new Date(r.created_at).getTime()
+          if (rTime > newestTime) {
+            newestTime = rTime
+            newestComment = c
+          }
+        })
+      }
+    })
+
+    return newestComment
+  }
+
   function handleNotificationClick() {
+    const newest = getNewestActiveComment()
+
     if (hasNewNotifications) {
-      framer.notify(`You have ${newCommentsCount} new feedback updates! Feed refreshed.`, { variant: "success", durationMs: 4000 })
+      framer.notify(`Opening your latest feedback update! 🎉`, { variant: "success", durationMs: 3000 })
       const now = new Date().toISOString()
       setLastViewedTime(now)
       if (project) {
         localStorage.setItem(`af_last_viewed_${project.id}`, now)
       }
+      setTab("projects")
+      if (newest) {
+        setActiveCommentId(newest.id)
+      }
     } else {
-      framer.notify("You're all caught up! No new comments or replies.", { variant: "info", durationMs: 3000 })
+      if (newest) {
+        framer.notify("Opening your most recent comment thread...", { variant: "info", durationMs: 2500 })
+        setTab("projects")
+        setActiveCommentId(newest.id)
+      } else {
+        framer.notify("You're all caught up! No comments have been made yet.", { variant: "info", durationMs: 3000 })
+      }
     }
   }
 
