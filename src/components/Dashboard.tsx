@@ -27,6 +27,9 @@ export function Dashboard({ session, onSignOut }: Props) {
   const [currentMonthCommentCount, setCurrentMonthCommentCount] = useState(0)
   const [commentLimitWarning, setCommentLimitWarning] = useState(false)
   const [activeCommentId, setActiveCommentId] = useState<string | null>(null)
+  const [lastViewedTime, setLastViewedTime] = useState<string>(() => {
+    return localStorage.getItem("af_last_viewed_default") || new Date().toISOString()
+  })
 
   // Manual installation states
   const [showManualSetup, setShowManualSetup] = useState(false)
@@ -35,6 +38,54 @@ export function Dashboard({ session, onSignOut }: Props) {
   // Project Creation Modal State
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [newProjectName, setNewProjectName] = useState("")
+
+  // Load last viewed time for project to track new notifications
+  useEffect(() => {
+    if (project) {
+      const stored = localStorage.getItem(`af_last_viewed_${project.id}`)
+      if (stored) {
+        setLastViewedTime(stored)
+      } else {
+        const now = new Date().toISOString()
+        localStorage.setItem(`af_last_viewed_${project.id}`, now)
+        setLastViewedTime(now)
+      }
+    }
+  }, [project])
+
+  // Count new notifications dynamically
+  const newCommentsCount = comments.filter(c => {
+    const isNewComment = new Date(c.created_at) > new Date(lastViewedTime)
+    const hasNewReply = c.replies && c.replies.some(r => new Date(r.created_at) > new Date(lastViewedTime))
+    return isNewComment || hasNewReply
+  }).length
+
+  const hasNewNotifications = newCommentsCount > 0
+
+  // Automatically mark comments as read after 4 seconds of viewing the projects tab
+  useEffect(() => {
+    if (tab === "projects" && hasNewNotifications && project) {
+      const timer = setTimeout(() => {
+        const now = new Date().toISOString()
+        setLastViewedTime(now)
+        localStorage.setItem(`af_last_viewed_${project.id}`, now)
+      }, 4000)
+      return () => clearTimeout(timer)
+    }
+  }, [tab, hasNewNotifications, project])
+
+  function handleNotificationClick() {
+    if (hasNewNotifications) {
+      framer.notify(`You have ${newCommentsCount} new feedback updates! Feed refreshed.`, { variant: "success", durationMs: 4000 })
+      const now = new Date().toISOString()
+      setLastViewedTime(now)
+      if (project) {
+        localStorage.setItem(`af_last_viewed_${project.id}`, now)
+      }
+    } else {
+      framer.notify("You're all caught up! No new comments or replies.", { variant: "info", durationMs: 3000 })
+    }
+  }
 
   // Load project list & install status
   useEffect(() => {
@@ -376,6 +427,37 @@ async function handleCreateProject() {
             <div className="dash-header" style={{ padding: "14px 16px 8px" }}>
               <span style={{ fontSize: "17px", fontWeight: "700", letterSpacing: "-0.4px" }}>Dashboard</span>
               <div style={{ display: "flex", alignItems: "center", gap: "12px", color: "var(--text-sub)" }}>
+                {/* Notification Bell Icon */}
+                <div style={{ position: "relative", cursor: "pointer", display: "flex", alignItems: "center" }} onClick={handleNotificationClick}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="18"
+                    height="18"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ color: hasNewNotifications ? "var(--red)" : "currentColor", transition: "color 0.2s" }}
+                  >
+                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                    <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                  </svg>
+                  {hasNewNotifications && (
+                    <span style={{
+                      position: "absolute",
+                      top: "-1px",
+                      right: "-1px",
+                      width: "7px",
+                      height: "7px",
+                      background: "var(--red)",
+                      borderRadius: "50%",
+                      boxShadow: "0 0 0 2px var(--bg), 0 0 6px var(--red)"
+                    }} />
+                  )}
+                </div>
+
                 {/* Plus add icon */}
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
