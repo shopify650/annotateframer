@@ -311,24 +311,39 @@ export function Settings({
       {/* Project Section */}
       {project && (
         <section className="settings-section">
-          <h4 className="settings-section-title">Project</h4>
+          <h4 className="settings-section-title">Project Settings</h4>
           <div className="field-group">
-            <label className="field-label">Project Name</label>
+            <label className="field-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Project Name</span>
+              {plan === "free" && <span style={{ fontSize: "9.5px", color: "var(--accent)", fontWeight: 600 }}>🔒 Auto-Managed (Pro to edit)</span>}
+            </label>
             <input
               className="field-input"
               value={siteName}
               onChange={e => setSiteName(e.target.value)}
               placeholder="My Framer Site"
+              disabled={plan === "free"}
+              style={{ opacity: plan === "free" ? 0.6 : 1, cursor: plan === "free" ? "not-allowed" : "text" }}
             />
           </div>
           <div className="field-group">
-            <label className="field-label">Published Site URL</label>
+            <label className="field-label" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span>Published Site URL</span>
+              {plan === "free" && <span style={{ fontSize: "9.5px", color: "var(--accent)", fontWeight: 600 }}>🔒 Auto-Detected & Locked</span>}
+            </label>
             <input
               className="field-input"
-              value={siteUrl}
+              value={siteUrl || ""}
               onChange={e => setSiteUrl(e.target.value)}
-              placeholder="https://mysite.framer.website"
+              placeholder="Publish site in Framer to auto-detect URL"
+              disabled={plan === "free"}
+              style={{ opacity: plan === "free" ? 0.6 : 1, cursor: plan === "free" ? "not-allowed" : "text" }}
             />
+            {plan === "free" && !siteUrl && (
+              <span style={{ fontSize: "9.5px", color: "var(--red)", marginTop: "4px", lineHeight: "1.4" }}>
+                ⚠️ Please publish your Framer site to automatically detect and lock your review URL!
+              </span>
+            )}
           </div>
 
           <div className="field-group" style={{ flexDirection: "row", alignItems: "center", gap: "8px", marginTop: "16px", marginBottom: "8px", background: "var(--surface2)", padding: "12px", borderRadius: "var(--radius)" }}>
@@ -345,31 +360,50 @@ export function Settings({
             </label>
           </div>
           <div style={{ display: "flex", gap: "8px", marginTop: "12px", alignItems: "center" }}>
-            <button className="btn-primary btn-sm" onClick={saveProject} disabled={saving}>
-              {saved ? "✅ Saved!" : saving ? "Saving…" : "Save Changes"}
-            </button>
-            {confirmDelete ? (
-              <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
-                <span style={{ fontSize: "10px", color: "var(--red)", fontWeight: "600" }}>Sure?</span>
-                <button 
-                  className="btn-primary btn-sm" 
-                  onClick={deleteProject} 
-                  style={{ background: "var(--red)", borderColor: "var(--red)", color: "#fff", padding: "4px 8px", fontSize: "10.5px" }}
-                >
-                  Yes
+            {plan !== "free" && (
+              <button className="btn-primary btn-sm" onClick={saveProject} disabled={saving}>
+                {saved ? "✅ Saved!" : saving ? "Saving…" : "Save Changes"}
+              </button>
+            )}
+            {plan !== "free" ? (
+              confirmDelete ? (
+                <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                  <span style={{ fontSize: "10px", color: "var(--red)", fontWeight: "600" }}>Sure?</span>
+                  <button 
+                    className="btn-primary btn-sm" 
+                    onClick={deleteProject} 
+                    style={{ background: "var(--red)", borderColor: "var(--red)", color: "#fff", padding: "4px 8px", fontSize: "10.5px" }}
+                  >
+                    Yes
+                  </button>
+                  <button 
+                    className="btn-ghost btn-sm" 
+                    onClick={() => setConfirmDelete(false)}
+                    style={{ padding: "4px 8px", fontSize: "10.5px" }}
+                  >
+                    No
+                  </button>
+                </div>
+              ) : (
+                <button className="btn-ghost btn-sm" onClick={() => setConfirmDelete(true)} style={{ color: "var(--red)", borderColor: "var(--red)" }}>
+                  Delete Project
                 </button>
+              )
+            ) : (
+              <div style={{ fontSize: "10.5px", color: "var(--text-sub)", display: "flex", alignItems: "center", gap: "4px" }}>
+                <span>🔒 Deleting projects & custom domains requires a</span>
                 <button 
-                  className="btn-ghost btn-sm" 
-                  onClick={() => setConfirmDelete(false)}
-                  style={{ padding: "4px 8px", fontSize: "10.5px" }}
+                  onClick={() => {
+                    const pricingGrid = document.querySelector(".pricing-grid")
+                    if (pricingGrid) {
+                      pricingGrid.scrollIntoView({ behavior: "smooth" })
+                    }
+                  }} 
+                  style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 600, padding: 0, textDecoration: "underline", cursor: "pointer", fontSize: "10.5px" }}
                 >
-                  No
+                  Pro Plan
                 </button>
               </div>
-            ) : (
-              <button className="btn-ghost btn-sm" onClick={() => setConfirmDelete(true)} style={{ color: "var(--red)", borderColor: "var(--red)" }}>
-                Delete Project
-              </button>
             )}
           </div>
         </section>

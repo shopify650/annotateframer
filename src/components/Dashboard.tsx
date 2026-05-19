@@ -108,14 +108,42 @@ export function Dashboard({ session, onSignOut }: Props) {
 
     let activeProj: Project | null = null
 
+    // Automatically detect published URL from Framer workspace!
+    let detectedUrl = ""
+    try {
+      const publishInfo = await framer.getPublishInfo()
+      detectedUrl = publishInfo?.production?.url || publishInfo?.staging?.url || ""
+    } catch (err) {
+      console.warn("[AF] Could not detect publish info:", err)
+    }
+
     if (existing && existing.length > 0) {
       setProjects(existing)
       activeProj = existing[0]
-      setProject(existing[0]) // Load the latest project
+
+      // For FREE users, auto-sync and lock URL matching the current Framer site
+      if (activeProj.plan === "free" && detectedUrl && activeProj.site_url !== detectedUrl) {
+        const { data: updated } = await supabase
+          .from("projects")
+          .update({ site_url: detectedUrl })
+          .eq("id", activeProj.id)
+          .select()
+          .single()
+        if (updated) {
+          activeProj = updated
+          setProjects(prev => prev.map(p => p.id === updated.id ? updated : p))
+        }
+      }
+
+      setProject(activeProj) // Load the latest project
     } else {
       const { data: created } = await supabase
         .from("projects")
-        .insert({ user_id: session.user.id, name: "Project one" })
+        .insert({ 
+          user_id: session.user.id, 
+          name: "Project one", 
+          site_url: detectedUrl || null 
+        })
         .select()
         .single()
       if (created) {
