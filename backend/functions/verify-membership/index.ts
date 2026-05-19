@@ -78,7 +78,15 @@ Deno.serve(async (req) => {
 
     let hasActiveMembership = false;
 
-    if (membersList.length > 0) {
+    // Whitelist for manual Pro upgrades (e.g. manual support / override)
+    const WHITELIST_PRO_EMAILS = [
+      "xavelop375@esyline.com"
+    ];
+
+    if (WHITELIST_PRO_EMAILS.includes(email.toLowerCase())) {
+      hasActiveMembership = true;
+      console.log(`[verify-membership] Email ${email} is whitelisted for Pro!`);
+    } else if (membersList.length > 0) {
       // Find the first member with matching user details
       const matchedMember = membersList.find(
         (m: any) => m.user?.email?.toLowerCase() === email.toLowerCase()
