@@ -18,15 +18,38 @@ export function App() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // ── Handle email-confirmation redirects ──────────────────
+    const hash = window.location.hash
+    if (hash && hash.includes('access_token')) {
+      const params = new URLSearchParams(hash.substring(1)) // strip leading '#'
+      const accessToken = params.get('access_token')
+      const refreshToken = params.get('refresh_token')
+      if (accessToken && refreshToken) {
+        // Hydrate the Supabase client with the tokens
+        supabase.auth.setSession({ access_token: accessToken, refresh_token: refreshToken })
+          .then(({ data, error }) => {
+            if (!error && data.session) {
+              setSession(data.session)
+            }
+          })
+          .finally(() => {
+            // Clean the ugly tokens out of the address bar
+            window.history.replaceState(null, '', window.location.pathname)
+          })
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     // Restore existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session)
       setLoading(false)
     })
 
-    // Listen for auth changes (fires when polling finds tokens and calls setSession)
+    // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
