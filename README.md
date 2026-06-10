@@ -76,17 +76,23 @@ supabase secrets set RESEND_API_KEY=re_your_key
 
 ---
 
-## 💰 Pricing (via Whop)
+---
 
-| Plan   | Price  | Projects | Comments |
-|--------|--------|----------|----------|
-| Free   | $0     | 1        | 10/mo    |
-| Pro    | $25/mo | ∞        | ∞        |
-| Agency | $59/mo | ∞        | ∞ + team |
+## 📦 Version History
 
-**200 Pro users = $5,000 MRR** 🚀
+### v1.0.0 (Latest Release)
+- **Google OAuth Database Relay Flow**: Resolved Framer OAuth popup limitations (COOP/COEP) by introducing `public/callback.html` which writes session tokens directly to `login_sessions` table in Supabase, and a polling handshake in `Setup.tsx`.
+- **Simplified Upgrade Flow**: Replaced the multi-plan pricing grid with a single high-converting "Upgrade to Pro" button in the Settings panel linked directly to Whop Checkout.
+- **Improved Alert Design**: Redesigned all banners (such as Domain Mismatch warnings and Monthly Limit reminders) with soft gradients, rounded badge icons, and high contrast typography.
 
-🛒 **Checkout:** https://whop.com/buildhaus-templates/annotate-framer-15/
+---
+
+## 💰 Pro Plan Upgrade (via Whop)
+
+- **Pro Plan Subscription:** $25/mo
+- **Features:** Unlimited projects, unlimited comments, reply to clients, custom domains.
+- ⚠️ **Important:** Users must sign up on Whop using the same email address as in this plugin to ensure automatic subscription sync.
+- 🛒 **Checkout Link:** https://whop.com/buildhaus-templates/annotate-framer-15/
 
 ---
 

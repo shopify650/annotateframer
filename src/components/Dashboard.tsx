@@ -639,34 +639,43 @@ async function handleCreateProject() {
               </div>
             )}
 
-            {/* Mismatched Project Domain Banner for Free Plan */}
-            {isDomainMismatched() && (
-              <div className="install-banner" style={{ margin: "0 12px 10px", borderRadius: "10px", border: "1px solid var(--red-dim)", background: "var(--red-dim)" }}>
-                <div className="install-banner-text">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--red)" }}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
-                  <div>
-                    <strong style={{ color: "var(--red)" }}>Mismatched Project Domain</strong>
-                    <p style={{ fontSize: "9px" }}>Your Free plan is permanently locked to <strong>{project?.site_url}</strong>. Upgrade to Pro to use AnnotateFrame on this new site.</p>
-                  </div>
-                </div>
-                <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px", background: "var(--red)", borderColor: "var(--red)", color: "#fff" }} onClick={() => setTab("settings")}>
-                  Upgrade
-                </button>
-              </div>
-            )}
-
             {/* Monthly Limit Warning Banner for Free Plan */}
             {plan === "free" && currentMonthCommentCount >= 10 && (
-              <div className="install-banner" style={{ margin: "0 12px 10px", borderRadius: "10px", border: "1px solid var(--yellow-dim)", background: "var(--yellow-dim)" }}>
-                <div className="install-banner-text">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--yellow)" }}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+              <div style={{
+                margin: "0 12px 10px",
+                borderRadius: "12px",
+                border: "1px solid rgba(59,130,246,0.2)",
+                background: "linear-gradient(135deg, rgba(59,130,246,0.06), rgba(139,92,246,0.03))",
+                padding: "14px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px"
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <div style={{
+                    width: "28px", height: "28px", borderRadius: "8px",
+                    background: "rgba(59,130,246,0.12)",
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+                  }}>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 6v6l4 2"/></svg>
+                  </div>
                   <div>
-                    <strong style={{ color: "var(--yellow)" }}>Monthly Limit Reached</strong>
-                    <p style={{ fontSize: "9px" }}>Free plan is limited to 10 comments/month. Upgrade to Pro for unlimited comments.</p>
+                    <span style={{ fontSize: "12px", fontWeight: "700", color: "#3b82f6", display: "block" }}>Monthly Limit Reached</span>
+                    <span style={{ fontSize: "10px", color: "var(--text-sub)", lineHeight: "1.4" }}>
+                      Free plan allows 10 comments/month. Upgrade for unlimited.
+                    </span>
                   </div>
                 </div>
-                <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px", background: "var(--yellow)", borderColor: "var(--yellow)", color: "#000" }} onClick={() => setTab("settings")}>
-                  Upgrade
+                <button
+                  onClick={() => setTab("settings")}
+                  style={{
+                    width: "100%", padding: "8px", borderRadius: "8px",
+                    background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+                    border: "none", color: "#fff", fontSize: "11px",
+                    fontWeight: "700", cursor: "pointer", letterSpacing: "0.3px"
+                  }}
+                >
+                  Upgrade to Pro →
                 </button>
               </div>
             )}

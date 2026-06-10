@@ -24,43 +24,7 @@ interface Props {
   detectedSiteUrl?: string
 }
 
-const PLANS = [
-  {
-    id: "free",
-    label: "Free",
-    price: "$0",
-    features: ["1 project", "10 comments/month", "Invite link", "Resolve comments"],
-    highlight: false,
-    checkoutUrl: null,
-  },
-  {
-    id: "pro",
-    label: "Pro",
-    price: "$25/mo",
-    features: [
-      "Unlimited projects",
-      "Unlimited comments",
-      "Reply to clients",
-    ],
-    highlight: true,
-    checkoutUrl: "https://whop.com/buildhaus-templates/annotate-framer-15/",
-  },
-  {
-    id: "agency",
-    label: "Agency",
-    price: "Coming Soon",
-    features: [
-      "Everything in Pro",
-      "CSV comment export",
-      "3 team seats",
-      "White-label modal",
-      "Zapier / webhooks",
-      "Slack notifications",
-    ],
-    highlight: false,
-    checkoutUrl: null,
-  },
-]
+const PRO_CHECKOUT_URL = "https://whop.com/buildhaus-templates/annotate-framer-15/"
 
 export function Settings({
   session,
@@ -90,11 +54,39 @@ export function Settings({
   const [restoring, setRestoring] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [showRefund, setShowRefund] = useState(false)
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [newPassword, setNewPassword] = useState("")
+  const [changingPassword, setChangingPassword] = useState(false)
+  const [passwordSuccess, setPasswordSuccess] = useState(false)
+  const [passwordError, setPasswordError] = useState<string | null>(null)
 
   const clean = (url: string) => {
     return url.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "").trim().toLowerCase()
   }
   const isMismatched = plan === "free" && !!detectedSiteUrl && !!project?.site_url && clean(project.site_url) !== clean(detectedSiteUrl)
+
+  async function handleChangePassword(e: React.FormEvent) {
+    e.preventDefault()
+    if (!newPassword || newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters.")
+      return
+    }
+    setChangingPassword(true)
+    setPasswordError(null)
+    setPasswordSuccess(false)
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword })
+      if (error) throw error
+      setPasswordSuccess(true)
+      setNewPassword("")
+      framer.notify("Password updated successfully!", { variant: "success", durationMs: 3000 })
+    } catch (err: any) {
+      console.error("[AF] Change password failed:", err)
+      setPasswordError(err.message || "Failed to update password.")
+    } finally {
+      setChangingPassword(false)
+    }
+  }
 
   async function handleRestorePurchase() {
     setRestoring(true)
@@ -185,9 +177,7 @@ export function Settings({
     }
   }
 
-  function upgrade(url: string) {
-    window.open(url, "_blank")
-  }
+
 
   return (
     <div className="settings-panel">
@@ -196,21 +186,41 @@ export function Settings({
         <h4 className="settings-section-title">Site Script</h4>
         
         {isMismatched && !installed && (
-          <div className="install-banner" style={{ borderRadius: "10px", border: "1px solid var(--red-dim)", background: "var(--red-dim)", marginBottom: "10px" }}>
-            <div className="install-banner-text">
-              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--red)" }}><circle cx="12" cy="12" r="10"/><line x1="12" x2="12" y1="8" y2="12"/><line x1="12" x2="12.01" y1="16" y2="16"/></svg>
+          <div style={{
+            borderRadius: "12px",
+            border: "1px solid rgba(251,146,60,0.45)",
+            background: "linear-gradient(135deg, rgba(251,146,60,0.15), rgba(249,115,22,0.08))",
+            padding: "14px",
+            display: "flex",
+            flexDirection: "column",
+            gap: "10px",
+            marginBottom: "10px"
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+              <div style={{
+                width: "28px", height: "28px", borderRadius: "8px",
+                background: "rgba(251,146,60,0.12)",
+                display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0
+              }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fb923c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><line x1="12" x2="12" y1="9" y2="13"/><line x1="12" x2="12.01" y1="17" y2="17"/></svg>
+              </div>
               <div>
-                <strong style={{ color: "var(--red)" }}>Mismatched Project Domain</strong>
-                <p style={{ fontSize: "9px" }}>This Free account is locked to <strong>{project?.site_url}</strong>. You cannot install scripts on this new website.</p>
+                <span style={{ fontSize: "12px", fontWeight: "700", color: "#fb923c", display: "block" }}>Domain Mismatch</span>
+                <span style={{ fontSize: "10px", color: "var(--text-sub)", lineHeight: "1.4" }}>
+                  This Free account is locked to <strong style={{ color: "var(--text)" }}>{project?.site_url}</strong>. You cannot install scripts on this new website.
+                </span>
               </div>
             </div>
-            <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px", background: "var(--red)", borderColor: "var(--red)", color: "#fff" }} onClick={() => {
-              const pricingGrid = document.querySelector(".pricing-grid")
-              if (pricingGrid) {
-                pricingGrid.scrollIntoView({ behavior: "smooth" })
-              }
-            }}>
-              Upgrade
+            <button
+              onClick={() => window.open(PRO_CHECKOUT_URL, "_blank")}
+              style={{
+                width: "100%", padding: "8px", borderRadius: "8px",
+                background: "linear-gradient(135deg, #fb923c, #f97316)",
+                border: "none", color: "#fff", fontSize: "11px",
+                fontWeight: "700", cursor: "pointer", letterSpacing: "0.3px"
+              }}
+            >
+              Upgrade to Pro →
             </button>
           </div>
         )}
@@ -332,7 +342,48 @@ export function Settings({
           >
             {restoring ? "Syncing..." : plan === "pro" || plan === "agency" ? "Sync Subscription" : "Restore Purchase"}
           </button>
+          <button 
+            className="btn-ghost btn-sm" 
+            onClick={() => {
+              setShowChangePassword(!showChangePassword)
+              setPasswordError(null)
+              setPasswordSuccess(false)
+              setNewPassword("")
+            }}
+            style={{ marginLeft: "auto" }}
+          >
+            {showChangePassword ? "Close" : "Change Password"}
+          </button>
         </div>
+
+        {showChangePassword && (
+          <form onSubmit={handleChangePassword} style={{ marginTop: "12px", borderTop: "1px solid var(--border)", paddingTop: "12px", display: "flex", flexDirection: "column", gap: "8px" }}>
+            <div className="field-group">
+              <label className="field-label">New Password</label>
+              <input
+                className="field-input"
+                type="password"
+                placeholder="Minimum 6 characters"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                required
+              />
+            </div>
+            {passwordError && (
+              <div style={{ color: "var(--red)", fontSize: "10px", marginTop: "2px" }}>
+                ⚠️ {passwordError}
+              </div>
+            )}
+            {passwordSuccess && (
+              <div style={{ color: "var(--green)", fontSize: "10px", marginTop: "2px" }}>
+                ✅ Password updated successfully!
+              </div>
+            )}
+            <button className="btn-primary" type="submit" disabled={changingPassword} style={{ width: "100%", marginTop: "4px" }}>
+              {changingPassword ? "Updating Password..." : "Update Password"}
+            </button>
+          </form>
+        )}
       </section>
 
       {/* Project Section */}
@@ -371,11 +422,7 @@ export function Settings({
                 ⚠️ Please publish your Framer site to automatically detect and lock your review URL!
               </span>
             )}
-            {isMismatched && (
-              <span style={{ fontSize: "9.5px", color: "var(--red)", marginTop: "4px", lineHeight: "1.4" }}>
-                ⚠️ Your Free plan is permanently locked to <strong>{project?.site_url}</strong>. You are currently running this inside <strong>{detectedSiteUrl}</strong>. To link this new website, please upgrade to Pro.
-              </span>
-            )}
+
           </div>
 
           <div className="field-group" style={{ flexDirection: "row", alignItems: "center", gap: "8px", marginTop: "16px", marginBottom: "8px", background: "var(--surface2)", padding: "12px", borderRadius: "var(--radius)" }}>
@@ -425,12 +472,7 @@ export function Settings({
               <div style={{ fontSize: "10.5px", color: "var(--text-sub)", display: "flex", alignItems: "center", gap: "4px" }}>
                 <span>🔒 Deleting projects & custom domains requires a</span>
                 <button 
-                  onClick={() => {
-                    const pricingGrid = document.querySelector(".pricing-grid")
-                    if (pricingGrid) {
-                      pricingGrid.scrollIntoView({ behavior: "smooth" })
-                    }
-                  }} 
+                  onClick={() => window.open(PRO_CHECKOUT_URL, "_blank")} 
                   style={{ background: "none", border: "none", color: "var(--accent)", fontWeight: 600, padding: 0, textDecoration: "underline", cursor: "pointer", fontSize: "10.5px" }}
                 >
                   Pro Plan
@@ -441,38 +483,22 @@ export function Settings({
         </section>
       )}
 
-      {/* Pricing Section */}
-      <section className="settings-section">
-        <h4 className="settings-section-title">Upgrade Plan</h4>
-        <p style={{ fontSize: "10.5px", color: "var(--text-sub)", margin: "-4px 0 12px", lineHeight: "1.4" }}>
-          ⚠️ <strong>Note:</strong> Please use the same email when purchasing on Whop that you use in this plugin to ensure automatic activation.
-        </p>
-        <div className="pricing-grid">
-          {PLANS.map(p => (
-            <div key={p.id} className={`pricing-card ${p.highlight ? "pricing-highlight" : ""} ${plan === p.id ? "pricing-current" : ""}`}>
-              <div className="pricing-header">
-                <span className="pricing-name">{p.label}</span>
-                <span className="pricing-price">{p.price}</span>
-              </div>
-              <ul className="pricing-features">
-                {p.features.map(f => (
-                  <li key={f}>✓ {f}</li>
-                ))}
-              </ul>
-              {plan === p.id ? (
-                <div className="pricing-current-badge">Current Plan</div>
-              ) : p.checkoutUrl ? (
-                <button
-                  className={`btn-upgrade ${p.highlight ? "btn-primary" : "btn-ghost"}`}
-                  onClick={() => upgrade(p.checkoutUrl!)}
-                >
-                  Upgrade →
-                </button>
-              ) : null}
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* Upgrade Section */}
+      {plan === "free" && (
+        <section className="settings-section">
+          <h4 className="settings-section-title">Upgrade Plan</h4>
+          <button
+            className="btn-primary"
+            onClick={() => window.open(PRO_CHECKOUT_URL, "_blank")}
+            style={{ width: "100%", background: "linear-gradient(135deg, #3b82f6, #8b5cf6)", border: "none", fontWeight: "700", fontSize: "13px", padding: "10px", borderRadius: "8px", cursor: "pointer", color: "#fff" }}
+          >
+            Upgrade to Pro →
+          </button>
+          <p style={{ fontSize: "9.5px", color: "var(--text-sub)", margin: "8px 0 0", lineHeight: "1.4", textAlign: "center" }}>
+            Use the same email on Whop for automatic subscription sync.
+          </p>
+        </section>
+      )}
 
       {/* Legal & Policies Section */}
       <section className="settings-section" style={{ borderTop: "1px solid var(--border)", paddingTop: "16px", marginTop: "16px" }}>

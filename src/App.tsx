@@ -24,7 +24,7 @@ export function App() {
       setLoading(false)
     })
 
-    // Listen for auth changes
+    // Listen for auth changes (fires when polling finds tokens and calls setSession)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session)
     })
