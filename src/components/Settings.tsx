@@ -263,7 +263,8 @@ export function Settings({
           page_path: window.location.href,
           browser: navigator.userAgent,
           status: "open",
-          client_name: "Test User"
+          client_name: "Test User",
+          client_email: "test@example.com"
         })
         .select()
         .single();
