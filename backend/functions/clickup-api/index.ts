@@ -62,7 +62,7 @@ serve(async (req) => {
 
     if (action === 'fetch-spaces') {
       console.log("[ClickUp-API] Fetching spaces...");
-      const res = await fetch(`https://api.clickup.com/api/v2/team/${workspaceId}/space', { headers })
+      const res = await fetch(`https://api.clickup.com/api/v2/team/${workspaceId}/space`, { headers })
       const data = await res.json()
       console.log("[ClickUp-API] ClickUp spaces response status:", res.status);
       console.log("[ClickUp-API] ClickUp spaces data:", JSON.stringify(data, null, 2));
@@ -74,7 +74,7 @@ serve(async (req) => {
 
     if (action === 'fetch-folders') {
       console.log("[ClickUp-API] Fetching folders...");
-      const res = await fetch(`https://api.clickup.com/api/v2/space/${spaceId}/folder', { headers })
+      const res = await fetch(`https://api.clickup.com/api/v2/space/${spaceId}/folder`, { headers })
       const data = await res.json()
       console.log("[ClickUp-API] ClickUp folders response status:", res.status);
       console.log("[ClickUp-API] ClickUp folders data:", JSON.stringify(data, null, 2));
@@ -101,7 +101,8 @@ serve(async (req) => {
 
     if (action === 'fetch-members') {
       console.log("[ClickUp-API] Fetching members for workspace:", workspaceId);
-      const url = `https://api.clickup.com/api/v2/team/${workspaceId}/member`;
+      // CORRECT ClickUp API endpoint for getting team members (no trailing /member)
+      const url = `https://api.clickup.com/api/v2/team/${workspaceId}`;
       console.log("[ClickUp-API] Calling ClickUp URL:", url);
       const res = await fetch(url, { headers })
       console.log("[ClickUp-API] ClickUp members response status:", res.status);
@@ -119,7 +120,8 @@ serve(async (req) => {
         console.error("[ClickUp-API] ClickUp API error:", data);
         throw new Error(data.err || data.message || 'Failed to fetch members');
       }
-      const members = data.members || data.team?.members || [];
+      // Team object has members array in data.team.members
+      const members = data.team?.members || data.members || [];
       console.log("[ClickUp-API] Extracted members:", members);
       return new Response(JSON.stringify({ members }), { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
