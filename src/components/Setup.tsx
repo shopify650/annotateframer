@@ -132,7 +132,7 @@ export function Setup({ onAuth }: Props) {
         provider: 'google',
         options: {
           skipBrowserRedirect: true, // Crucial for Framer plugins (iframes)
-          redirectTo: `https://7o4g1071umi9kwq825wyz4re3-6c27dgraz4icfwyevx62zrxxlkxtifwn.plugins.framercdn.com/callback.html?loginId=${loginId}`,
+          redirectTo: `${window.location.origin}/callback.html?loginId=${loginId}&supabaseUrl=${encodeURIComponent(import.meta.env.VITE_SUPABASE_URL)}&supabaseKey=${encodeURIComponent(import.meta.env.VITE_SUPABASE_ANON_KEY)}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',

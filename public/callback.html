@@ -41,19 +41,17 @@
   </div>
 
   <script>
-    // ─── CONFIG ──────────────────────────────────────────────
-    const SUPABASE_URL = 'https://rajchwlaxdomhvlqjfxy.supabase.co';
-    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhamNod2xheGRvbWh2bHFqZnh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg5NDg4ODMsImV4cCI6MjA5NDUyNDg4M30.FH2oIZAz7C1CD1gkXRkUWk16wavTt_a-kV5i9wy_mBc';
-
-    // ─── PARSE TOKENS FROM URL HASH ─────────────────────────
+    // ─── PARSE PARAMETERS FROM URL ─────────────────────────
     // Supabase puts tokens in the hash fragment: #access_token=xxx&refresh_token=yyy
     const hashParams = new URLSearchParams(window.location.hash.substring(1));
     const accessToken = hashParams.get('access_token');
     const refreshToken = hashParams.get('refresh_token');
 
-    // Get the loginId from query params: ?loginId=xxx
+    // Get query params: ?loginId=xxx&supabaseUrl=yyy&supabaseKey=zzz
     const searchParams = new URLSearchParams(window.location.search);
     const loginId = searchParams.get('loginId');
+    const supabaseUrl = searchParams.get('supabaseUrl');
+    const supabaseKey = searchParams.get('supabaseKey');
 
     const titleEl = document.getElementById('title');
     const messageEl = document.getElementById('message');
@@ -86,15 +84,19 @@
         showError('Missing login session ID. Please try logging in again.');
         return;
       }
+      if (!supabaseUrl || !supabaseKey) {
+        showError('Missing Supabase configuration. Please try logging in again.');
+        return;
+      }
 
       try {
         // Insert the tokens into the login_sessions table using the Supabase REST API
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/login_sessions`, {
+        const response = await fetch(`${supabaseUrl}/rest/v1/login_sessions`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'apikey': supabaseKey,
+            'Authorization': `Bearer ${supabaseKey}`,
             'Prefer': 'return=minimal'
           },
           body: JSON.stringify({

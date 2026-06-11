@@ -93,6 +93,12 @@ create policy "Agency updates own project comments"
     project_id in (select id from projects where user_id = auth.uid())
   );
 
+create policy "Agency deletes own project comments"
+  on comments for delete
+  using (
+    project_id in (select id from projects where user_id = auth.uid())
+  );
+
 -- Replies: anyone can insert (client replies via future feature), owner reads
 create policy "Anyone can insert replies"
   on replies for insert

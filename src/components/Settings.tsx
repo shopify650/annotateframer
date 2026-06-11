@@ -50,11 +50,11 @@ interface ClickUpList {
 }
 
 interface ClickUpMember {
-  id: number
   user: {
-    username: string
-    email: string
-  }
+    id: number;
+    username: string;
+    email: string;
+  };
 }
 
 export function Settings({
@@ -963,11 +963,11 @@ export function Settings({
                           <select
                             className="field-input"
                             value={project.clickup_assignee_id || ""}
-                            onChange={e => onProjectUpdate({ ...project, clickup_assignee_id: e.target.value })}
+                            onChange={(e) => onProjectUpdate({ ...project, clickup_assignee_id: e.target.value })}
                           >
                             <option key="assignee-default" value="">Unassigned</option>
                             {clickUpMembers.map((m, index) => (
-                              <option key={`member-${m.id || index}`} value={String(m.id)}>{m.user.username || m.user.email}</option>
+                              <option key={`member-${m.user.id || index}`} value={String(m.user.id)}>{m.user.username || m.user.email}</option>
                             ))}
                           </select>
                         </div>

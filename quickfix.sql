@@ -44,3 +44,9 @@ CREATE POLICY "Anyone can delete login sessions" ON login_sessions FOR DELETE US
 -- 6. Add ClickUp indexes if they don't exist
 CREATE INDEX IF NOT EXISTS idx_projects_user_id ON projects(user_id);
 CREATE INDEX IF NOT EXISTS idx_projects_token ON projects(invite_token);
+
+-- 7. Add delete RLS policy for comments
+DROP POLICY IF EXISTS "Agency deletes own project comments" ON comments;
+CREATE POLICY "Agency deletes own project comments" ON comments FOR DELETE USING (
+  project_id IN (SELECT id FROM projects WHERE user_id = auth.uid())
+);
