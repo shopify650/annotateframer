@@ -97,6 +97,17 @@ export function Settings({
   const [clickUpLoading, setClickUpLoading] = useState(false)
   const [oauthWindow, setOauthWindow] = useState<Window | null>(null)
 
+  // Scroll to upgrade section when settings tab opens
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const upgradeSection = document.getElementById('upgrade-section')
+      if (upgradeSection) {
+        upgradeSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [])
+
   const clean = (url: string) => {
     return url.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "").trim().toLowerCase()
   }
@@ -503,7 +514,7 @@ export function Settings({
               </div>
             </div>
             <button
-              onClick={() => window.open(PRO_CHECKOUT_URL, "_blank")}
+              onClick={() => setTab("settings")}
               style={{
                 width: "100%", padding: "8px", borderRadius: "8px",
                 background: "linear-gradient(135deg, #fb923c, #f97316)",
@@ -798,7 +809,7 @@ export function Settings({
                 </div>
               </div>
               <button
-                onClick={() => window.open(PRO_CHECKOUT_URL, "_blank")}
+                onClick={() => setTab("settings")}
                 style={{
                   width: "100%", padding: "8px", borderRadius: "8px",
                   background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
@@ -964,7 +975,7 @@ export function Settings({
 
       {/* Upgrade Section */}
       {plan === "free" && (
-        <section className="settings-section">
+        <section className="settings-section" id="upgrade-section">
           <h4 className="settings-section-title">Upgrade Plan</h4>
           <button
             className="btn-primary"
