@@ -32,9 +32,9 @@ export function Dashboard({ session, onSignOut }: Props) {
     return localStorage.getItem("af_last_viewed_default") || new Date().toISOString()
   })
 
-  // Manual installation states
   const [showManualSetup, setShowManualSetup] = useState(false)
   const [permissionError, setPermissionError] = useState<string | null>(null)
+  const [scrollToUpgrade, setScrollToUpgrade] = useState(false)
 
   // Project Creation Modal State
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -714,7 +714,10 @@ async function handleCreateProject() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setTab("settings")}
+                  onClick={() => {
+                    setScrollToUpgrade(true)
+                    setTab("settings")
+                  }}
                   style={{
                     width: "100%", padding: "8px", borderRadius: "8px",
                     background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
@@ -893,6 +896,8 @@ async function handleCreateProject() {
               }
             }}
             setTab={setTab}
+            scrollToUpgrade={scrollToUpgrade}
+            onResetScrollToUpgrade={() => setScrollToUpgrade(false)}
           />
         )}
 

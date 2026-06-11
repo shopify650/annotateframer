@@ -23,6 +23,8 @@ interface Props {
   permissionError: string | null
   detectedSiteUrl?: string
   setTab: (tab: string) => void
+  scrollToUpgrade?: boolean
+  onResetScrollToUpgrade?: () => void
 }
 
 const PRO_CHECKOUT_URL = "https://whop.com/buildhaus-templates/annotate-framer-15/"
@@ -74,7 +76,9 @@ export function Settings({
   onHideManualSetup,
   permissionError,
   detectedSiteUrl = "",
-  setTab
+  setTab,
+  scrollToUpgrade = false,
+  onResetScrollToUpgrade
 }: Props) {
   const [siteName, setSiteName] = useState(project?.name ?? "")
   const [siteUrl, setSiteUrl] = useState(project?.site_url ?? "")
@@ -97,16 +101,21 @@ export function Settings({
   const [clickUpLoading, setClickUpLoading] = useState(false)
   const [oauthWindow, setOauthWindow] = useState<Window | null>(null)
 
-  // Scroll to upgrade section when settings tab opens
+  // Scroll to upgrade section ONLY when scrollToUpgrade is true
   useEffect(() => {
-    const timer = setTimeout(() => {
-      const upgradeSection = document.getElementById('upgrade-section')
-      if (upgradeSection) {
-        upgradeSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
-    }, 100)
-    return () => clearTimeout(timer)
-  }, [])
+    if (scrollToUpgrade) {
+      const timer = setTimeout(() => {
+        const upgradeSection = document.getElementById('upgrade-section')
+        if (upgradeSection) {
+          upgradeSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+        if (onResetScrollToUpgrade) {
+          onResetScrollToUpgrade()
+        }
+      }, 100)
+      return () => clearTimeout(timer)
+    }
+  }, [scrollToUpgrade, onResetScrollToUpgrade])
 
   const clean = (url: string) => {
     return url.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "").trim().toLowerCase()
@@ -514,7 +523,12 @@ export function Settings({
               </div>
             </div>
             <button
-              onClick={() => setTab("settings")}
+              onClick={() => {
+                const upgradeSection = document.getElementById('upgrade-section')
+                if (upgradeSection) {
+                  upgradeSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }
+              }}
               style={{
                 width: "100%", padding: "8px", borderRadius: "8px",
                 background: "linear-gradient(135deg, #fb923c, #f97316)",
@@ -809,7 +823,12 @@ export function Settings({
                 </div>
               </div>
               <button
-                onClick={() => setTab("settings")}
+                onClick={() => {
+                  const upgradeSection = document.getElementById('upgrade-section')
+                  if (upgradeSection) {
+                    upgradeSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                  }
+                }}
                 style={{
                   width: "100%", padding: "8px", borderRadius: "8px",
                   background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
