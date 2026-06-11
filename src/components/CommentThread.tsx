@@ -5,12 +5,13 @@ import type { Comment, Reply } from "../types"
 interface Props {
   comment: Comment
   onResolve: () => void
+  onReply: () => void // <-- Add this
   siteUrl?: string | null
   inviteToken?: string
   project?: any // Passed from Dashboard to check settings
 }
 
-export function CommentThread({ comment, onResolve, siteUrl, inviteToken, project }: Props) {
+export function CommentThread({ comment, onResolve, onReply, siteUrl, inviteToken, project }: Props) {
   const [reply, setReply] = useState("")
   const [sending, setSending] = useState(false)
   const [expanded, setExpanded] = useState(comment.status !== "resolved")
@@ -55,6 +56,8 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken, projec
           })
         }
       }
+
+      onReply() // <-- Call the callback!
     } catch (err) {
       console.error("[AF] Failed to send reply:", err)
     } finally {

@@ -972,6 +972,7 @@ async function handleCreateProject() {
           comment={comments.find(c => c.id === activeCommentId)!}
           onClose={() => setActiveCommentId(null)}
           onResolve={() => resolveComment(activeCommentId)}
+          onReply={() => loadComments()}
           siteUrl={project?.site_url}
           inviteToken={project?.invite_token}
         />

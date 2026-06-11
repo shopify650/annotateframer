@@ -6,11 +6,12 @@ interface Props {
   comment: Comment
   onClose: () => void
   onResolve: () => void
+  onReply: () => void
   siteUrl?: string | null
   inviteToken?: string
 }
 
-export function ChatView({ comment, onClose, onResolve, siteUrl, inviteToken }: Props) {
+export function ChatView({ comment, onClose, onResolve, onReply, siteUrl, inviteToken }: Props) {
   const [reply, setReply] = useState("")
   const [sending, setSending] = useState(false)
   const [lightboxOpen, setLightboxOpen] = useState(false)
@@ -62,6 +63,8 @@ export function ChatView({ comment, onClose, onResolve, siteUrl, inviteToken }: 
           })
         }
       }
+
+      onReply() // Call onReply callback!
     } catch (err) {
       console.error("[AF] Failed to send reply:", err)
     } finally {
