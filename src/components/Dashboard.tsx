@@ -848,9 +848,24 @@ async function handleCreateProject() {
             }}
             permissionError={permissionError}
             onSignOut={onSignOut}
-            onProjectUpdate={(updated) => {
+            onProjectUpdate={async (updated) => {
+              // Update local state first for snappy UI
               setProject(updated)
               setProjects(prev => prev.map(p => p.id === updated.id ? updated : p))
+              
+              // Now save changes to Supabase
+              try {
+                const { error } = await supabase
+                  .from('projects')
+                  .update(updated)
+                  .eq('id', updated.id)
+                if (error) {
+                  console.error("[AF] Failed to update project in Supabase:", error)
+                  framer.notify("Failed to save changes. Please try again.", { variant: "error" })
+                }
+              } catch (err) {
+                console.error("[AF] Project update error:", err)
+              }
             }}
             onSelectProject={setProject}
             onProjectDelete={(deletedId) => {

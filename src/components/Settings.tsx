@@ -387,6 +387,7 @@ export function Settings({
 
   // Sync state if active project changes
   useEffect(() => {
+    console.log("[AF] Project changed:", project)
     setSiteName(project?.name ?? "")
     setSiteUrl(project?.site_url ?? "")
     // Reset ClickUp state when project changes
@@ -399,6 +400,7 @@ export function Settings({
 
   // Fetch workspaces when API token is set
   useEffect(() => {
+    console.log("[AF] Check fetch workspaces:", { enabled: project?.clickup_enabled, token: project?.clickup_api_token })
     if (project?.clickup_enabled && project?.clickup_api_token) {
       fetchClickUpWorkspaces()
     }
@@ -406,6 +408,7 @@ export function Settings({
 
   // Fetch spaces and members when workspace is selected
   useEffect(() => {
+    console.log("[AF] Check fetch spaces/members:", { enabled: project?.clickup_enabled, workspace: project?.clickup_workspace_id })
     if (project?.clickup_enabled && project?.clickup_workspace_id) {
       fetchClickUpSpaces()
       fetchClickUpMembers()
@@ -859,7 +862,10 @@ export function Settings({
                             <select
                               className="field-input"
                               value={project.clickup_workspace_id || ""}
-                              onChange={e => onProjectUpdate({ ...project, clickup_workspace_id: e.target.value, clickup_space_id: null, clickup_folder_id: null, clickup_list_id: null })}
+                              onChange={e => {
+                                console.log("[AF] Workspace selected:", e.target.value)
+                                onProjectUpdate({ ...project, clickup_workspace_id: e.target.value, clickup_space_id: null, clickup_folder_id: null, clickup_list_id: null })
+                              }}
                             >
                               <option key="workspace-default" value="">Select Workspace</option>
                               {clickUpWorkspaces.map((workspace, index) => (
