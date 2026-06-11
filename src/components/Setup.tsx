@@ -140,6 +140,8 @@ export function Setup({ onAuth }: Props) {
         },
       })
       
+      console.log('Google OAuth Auth URL:', data?.url)
+      
       if (error) {
         clearInterval(poll)
         throw error
