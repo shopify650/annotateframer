@@ -148,8 +148,7 @@ serve(async (req) => {
 
       const taskData: any = {
         name: `[AnnotateFrame] ${comment.body.substring(0, 50)}${comment.body.length > 50 ? '...' : ''}`,
-        description: `Comment:\n${comment.body}\n\nPage:\n${comment.page_path}\n\nProject:\n${project.name}\n\nDevice:\n${comment.browser || 'Unknown'}\n\nStatus:\n${comment.status}\n\nCreated:\n${comment.created_at}\n\nAnnotateFrame Comment ID:\n${comment.id}`,
-        status: 'OPEN'
+        description: `Comment:\n${comment.body}\n\nPage:\n${comment.page_path}\n\nProject:\n${project.name}\n\nDevice:\n${comment.browser || 'Unknown'}\n\nStatus:\n${comment.status}\n\nCreated:\n${comment.created_at}\n\nAnnotateFrame Comment ID:\n${comment.id}`
       }
 
       console.log("[ClickUp-API] Project clickup_assignee_id:", project.clickup_assignee_id);
