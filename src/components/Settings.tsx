@@ -93,6 +93,7 @@ export function Settings({
   const [clickUpLists, setClickUpLists] = useState<ClickUpList[]>([])
   const [clickUpMembers, setClickUpMembers] = useState<ClickUpMember[]>([])
   const [clickUpLoading, setClickUpLoading] = useState(false)
+  const [clickUpTestLoading, setClickUpTestLoading] = useState(false)
   const [oauthWindow, setOauthWindow] = useState<Window | null>(null)
 
   const clean = (url: string) => {
@@ -240,6 +241,68 @@ export function Settings({
       framer.notify(`Failed to fetch ClickUp members: ${(err as Error).message}`, { variant: "error" })
     } finally {
       setClickUpLoading(false)
+    }
+  }
+
+  const testClickUpCreateTask = async () => {
+    if (!project?.clickup_api_token || !project?.clickup_list_id || !session) {
+      framer.notify("Please connect ClickUp and select a list first", { variant: "error" });
+      return;
+    }
+    
+    setClickUpTestLoading(true);
+    try {
+      console.log("[AF] Testing ClickUp create task...");
+      
+      // First, let's create a test comment in the database (we'll delete it afterward)
+      const { data: testComment, error: createError } = await supabase
+        .from('comments')
+        .insert({
+          project_id: project.id,
+          body: "This is a test comment from AnnotateFrame! 🎉",
+          page_path: window.location.href,
+          browser: navigator.userAgent,
+          status: "open"
+        })
+        .select()
+        .single();
+        
+      if (createError) throw createError;
+      
+      console.log("[AF] Created test comment:", testComment);
+      
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          action: "create-task",
+          token: project.clickup_api_token,
+          listId: project.clickup_list_id,
+          commentId: testComment.id,
+          projectId: project.id
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create test task");
+      }
+      
+      const data = await response.json();
+      console.log("[AF] Test task created successfully:", data);
+      framer.notify("Test task created successfully in ClickUp! 🎉", { variant: "success" });
+
+      // Now clean up and delete the test comment
+      await supabase.from('comments').delete().eq('id', testComment.id);
+      
+    } catch (err) {
+      console.error("[AF] Test ClickUp task failed:", err);
+      framer.notify(`Test failed: ${(err as Error).message}`, { variant: "error" });
+    } finally {
+      setClickUpTestLoading(false);
     }
   }
 
@@ -953,6 +1016,22 @@ export function Settings({
                       <span style={{ fontSize: "10.5px", color: "var(--text-sub)", fontWeight: 400 }}>Every new client comment automatically creates a task.</span>
                     </label>
                   </div>
+                  
+                  {project.clickup_list_id && (
+                    <button
+                      onClick={testClickUpCreateTask}
+                      disabled={clickUpTestLoading}
+                      className="btn-primary"
+                      style={{ 
+                        width: "100%", 
+                        padding: "10px", 
+                        background: "linear-gradient(135deg, #10b981, #059669)", 
+                        border: "none" 
+                      }}
+                    >
+                      {clickUpTestLoading ? "Creating Test Task..." : "🔧 Test Create Task"}
+                    </button>
+                  )}
                 </>
               )}
             </div>
