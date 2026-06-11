@@ -264,7 +264,9 @@ export function Settings({
           browser: navigator.userAgent,
           status: "open",
           client_name: "Test User",
-          client_email: "test@example.com"
+          client_email: "test@example.com",
+          x_percent: 50,
+          y_percent: 50
         })
         .select()
         .single();
