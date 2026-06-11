@@ -3,6 +3,7 @@
 
 # Node modules (never commit)
 node_modules/
+client-script/node_modules/
 
 # Build files
 dist/
