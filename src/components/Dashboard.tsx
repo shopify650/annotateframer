@@ -715,6 +715,7 @@ async function handleCreateProject() {
                 </div>
                 <button
                   onClick={() => {
+                    console.log("[AF] Setting scrollToUpgrade to true!");
                     setScrollToUpgrade(true)
                     setTab("settings")
                   }}

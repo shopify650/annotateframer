@@ -103,13 +103,16 @@ export function Settings({
 
   // Scroll to upgrade section ONLY when scrollToUpgrade is true
   useEffect(() => {
+    console.log("[AF] Settings scrollToUpgrade useEffect running:", { scrollToUpgrade });
     if (scrollToUpgrade) {
       const timer = setTimeout(() => {
         const upgradeSection = document.getElementById('upgrade-section')
+        console.log("[AF] Found upgrade section?", !!upgradeSection);
         if (upgradeSection) {
           upgradeSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }
         if (onResetScrollToUpgrade) {
+          console.log("[AF] Calling onResetScrollToUpgrade!");
           onResetScrollToUpgrade()
         }
       }, 100)
