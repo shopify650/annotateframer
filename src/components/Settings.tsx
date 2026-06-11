@@ -212,6 +212,7 @@ export function Settings({
     if (!project?.clickup_api_token || !project?.clickup_workspace_id || !session) return
     setClickUpLoading(true)
     try {
+      console.log("[AF] Fetching ClickUp members for workspace:", project.clickup_workspace_id);
       const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
         method: "POST",
         headers: {
@@ -224,12 +225,18 @@ export function Settings({
           workspaceId: project.clickup_workspace_id
         })
       })
-      if (!response.ok) throw new Error("Failed to fetch members")
+      console.log("[AF] ClickUp members response status:", response.status);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("[AF] ClickUp API error:", errorData);
+        throw new Error(errorData.error || 'Failed to fetch members');
+      }
       const data = await response.json()
+      console.log("[AF] ClickUp members data:", data);
       setClickUpMembers(data.members || [])
     } catch (err) {
       console.error("[AF] Fetch ClickUp members failed:", err)
-      framer.notify("Failed to fetch ClickUp members", { variant: "error" })
+      framer.notify(`Failed to fetch ClickUp members: ${(err as Error).message}`, { variant: "error" })
     } finally {
       setClickUpLoading(false)
     }

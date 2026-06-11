@@ -81,9 +81,15 @@ serve(async (req) => {
       console.log("[ClickUp-API] Fetching members for workspace:", workspaceId);
       const res = await fetch(`https://api.clickup.com/api/v2/team/${workspaceId}/member`, { headers: { 'Authorization': activeClickupToken, 'Content-Type': 'application/json' } })
       const data = await res.json()
-      console.log("[ClickUp-API] ClickUp API members response:", data);
-      if (!res.ok) throw new Error(data.err || 'Failed to fetch members')
-      return new Response(JSON.stringify({ members: data.members }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
+      console.log("[ClickUp-API] Full ClickUp API response:", JSON.stringify(data, null, 2));
+      if (!res.ok) {
+        console.error("[ClickUp-API] ClickUp API error response:", data);
+        throw new Error(data.err || data.message || 'Failed to fetch members');
+      }
+      // Try multiple possible property names for members
+      const members = data.members || data.team?.members || [];
+      console.log("[ClickUp-API] Extracted members:", members);
+      return new Response(JSON.stringify({ members }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
     }
 
     if (action === 'create-task') {
