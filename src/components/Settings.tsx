@@ -93,7 +93,6 @@ export function Settings({
   const [clickUpLists, setClickUpLists] = useState<ClickUpList[]>([])
   const [clickUpMembers, setClickUpMembers] = useState<ClickUpMember[]>([])
   const [clickUpLoading, setClickUpLoading] = useState(false)
-  const [clickUpTestLoading, setClickUpTestLoading] = useState(false)
   const [oauthWindow, setOauthWindow] = useState<Window | null>(null)
 
   const clean = (url: string) => {
@@ -241,86 +240,6 @@ export function Settings({
       framer.notify(`Failed to fetch ClickUp members: ${(err as Error).message}`, { variant: "error" })
     } finally {
       setClickUpLoading(false)
-    }
-  }
-
-  const testClickUpCreateTask = async () => {
-    if (!project?.clickup_api_token || !project?.clickup_list_id || !session) {
-      framer.notify("Please connect ClickUp and select a list first", { variant: "error" });
-      return;
-    }
-    
-    setClickUpTestLoading(true);
-    try {
-      console.log("[AF] Testing ClickUp create task...");
-      
-      // First, let's create a test comment in the database (we'll delete it afterward)
-      const { data: testComment, error: createError } = await supabase
-        .from('comments')
-        .insert({
-          project_id: project.id,
-          body: "This is a test comment from Remark! 🎉",
-          page_path: window.location.href,
-          browser: navigator.userAgent,
-          status: "open",
-          client_name: "Test User",
-          client_email: "test@example.com",
-          x_percent: 50,
-          y_percent: 50
-        })
-        .select()
-        .single();
-        
-      if (createError) throw createError;
-      
-      console.log("[AF] Created test comment:", testComment);
-      
-      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          action: "create-task",
-          token: project.clickup_api_token,
-          listId: project.clickup_list_id,
-          commentId: testComment.id,
-          projectId: project.id
-        })
-      });
-
-      const responseText = await response.text();
-      console.log("[AF] ClickUp API response text:", responseText);
-      
-      if (!response.ok) {
-        let errorData;
-        try {
-          errorData = JSON.parse(responseText);
-        } catch (e) {
-          throw new Error(responseText);
-        }
-        throw new Error(errorData.error || "Failed to create test task");
-      }
-      
-      let data;
-      try {
-        data = JSON.parse(responseText);
-      } catch (e) {
-        throw new Error("ClickUp function returned invalid JSON: " + responseText);
-      }
-      
-      console.log("[AF] Test task created successfully:", data);
-      framer.notify("Test task created successfully in ClickUp! 🎉", { variant: "success" });
-
-      // Now clean up and delete the test comment
-      await supabase.from('comments').delete().eq('id', testComment.id);
-      
-    } catch (err) {
-      console.error("[AF] Test ClickUp task failed:", err);
-      framer.notify(`Test failed: ${(err as Error).message}`, { variant: "error" });
-    } finally {
-      setClickUpTestLoading(false);
     }
   }
 
@@ -1018,32 +937,6 @@ export function Settings({
                           </select>
                         </div>
                       )}
-
-                      {project.clickup_workspace_id && (
-                        <div className="field-group">
-                          <label className="field-label">Page URL Custom Field ID (Optional)</label>
-                          <input
-                            type="text"
-                            className="field-input"
-                            value={project.clickup_page_url_field_id || ""}
-                            placeholder="Enter ClickUp custom field ID"
-                            onChange={e => onProjectUpdate({ ...project, clickup_page_url_field_id: e.target.value })}
-                          />
-                        </div>
-                      )}
-
-                      {project.clickup_workspace_id && (
-                        <div className="field-group">
-                          <label className="field-label">Website Custom Field ID (Optional)</label>
-                          <input
-                            type="text"
-                            className="field-input"
-                            value={project.clickup_website_field_id || ""}
-                            placeholder="Enter ClickUp custom field ID"
-                            onChange={e => onProjectUpdate({ ...project, clickup_website_field_id: e.target.value })}
-                          />
-                        </div>
-                      )}
                     </div>
                   )}
 
@@ -1060,22 +953,6 @@ export function Settings({
                       <span style={{ fontSize: "10.5px", color: "var(--text-sub)", fontWeight: 400 }}>Every new client comment automatically creates a task.</span>
                     </label>
                   </div>
-                  
-                  {project.clickup_list_id && (
-                    <button
-                      onClick={testClickUpCreateTask}
-                      disabled={clickUpTestLoading}
-                      className="btn-primary"
-                      style={{ 
-                        width: "100%", 
-                        padding: "10px", 
-                        background: "linear-gradient(135deg, #10b981, #059669)", 
-                        border: "none" 
-                      }}
-                    >
-                      {clickUpTestLoading ? "Creating Test Task..." : "🔧 Test Create Task"}
-                    </button>
-                  )}
                 </>
               )}
             </div>
