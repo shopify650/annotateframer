@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { supabase } from "../lib/supabase"
+import { supabase, OAUTH_CALLBACK_URL } from "../lib/supabase"
 
 interface Props {
   onAuth: (session: any) => void
@@ -132,7 +132,7 @@ export function Setup({ onAuth }: Props) {
         provider: 'google',
         options: {
           skipBrowserRedirect: true, // Crucial for Framer plugins (iframes)
-          redirectTo: `${window.location.origin}/callback.html?loginId=${loginId}&supabaseUrl=${encodeURIComponent(import.meta.env.VITE_SUPABASE_URL)}&supabaseKey=${encodeURIComponent(import.meta.env.VITE_SUPABASE_ANON_KEY)}`,
+          redirectTo: `${OAUTH_CALLBACK_URL}?loginId=${loginId}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
