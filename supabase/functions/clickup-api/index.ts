@@ -131,15 +131,19 @@ serve(async (req) => {
     if (action === 'create-task') {
       console.log("[ClickUp-API] Creating task...");
       const { data: comment } = await supabaseClient.from('comments').select('*').eq('id', commentId).single()
+      console.log("[ClickUp-API] Comment found:", comment);
       if (!comment) throw new Error('Comment not found')
       
       const { data: project } = await supabaseClient.from('projects').select('*').eq('id', projectId).single()
+      console.log("[ClickUp-API] Project found:", project);
       if (!project) throw new Error('Project not found')
 
       const activeToken = project.clickup_api_token || activeClickupToken
+      console.log("[ClickUp-API] Active token present:", !!activeToken);
       if (!activeToken) throw new Error('ClickUp integration not configured')
       
       const activeListId = project.clickup_list_id || listId
+      console.log("[ClickUp-API] Active list ID:", activeListId);
       if (!activeListId) throw new Error('ClickUp list not configured')
 
       const taskData: any = {
@@ -148,10 +152,14 @@ serve(async (req) => {
         status: 'OPEN'
       }
 
+      console.log("[ClickUp-API] Project clickup_assignee_id:", project.clickup_assignee_id);
       if (project.clickup_assignee_id) {
         taskData.assignees = [Number(project.clickup_assignee_id)]
+        console.log("[ClickUp-API] Added assignees to task:", taskData.assignees);
       }
 
+      console.log("[ClickUp-API] Task data:", JSON.stringify(taskData, null, 2));
+      
       const res = await fetch(`https://api.clickup.com/api/v2/list/${activeListId}/task`, {
         method: 'POST',
         headers: {
@@ -161,9 +169,24 @@ serve(async (req) => {
         body: JSON.stringify(taskData)
       })
 
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.err || 'Failed to create task')
+      console.log("[ClickUp-API] ClickUp create task response status:", res.status);
+      const responseText = await res.text()
+      console.log("[ClickUp-API] ClickUp create task raw response:", responseText);
+      let data;
+      try {
+        data = JSON.parse(responseText)
+      } catch (e) {
+        console.error("[ClickUp-API] Failed to parse ClickUp response");
+        throw new Error("ClickUp returned invalid JSON: " + responseText);
+      }
+      
+      if (!res.ok) {
+        console.error("[ClickUp-API] ClickUp create task error:", data);
+        throw new Error(data.err || data.message || 'Failed to create task')
+      }
 
+      console.log("[ClickUp-API] ClickUp task created:", data);
+      
       await supabaseClient.from('comments').update({
         clickup_task_id: data.id,
         clickup_task_url: data.url,
