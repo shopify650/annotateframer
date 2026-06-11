@@ -2,8 +2,8 @@
   "name": "annotateframe-client",
   "version": "1.0.0",
   "scripts": {
-    "build": "npx esbuild src/index.ts --bundle --minify --outfile=../public/annotateframe.min.js --platform=browser --target=es2017",
-    "build:dev": "npx esbuild src/index.ts --bundle --outfile=../public/annotateframe.dev.js --platform=browser --target=es2017 --sourcemap"
+    "build": "npx esbuild src/index.ts --bundle --minify --outfile=../public/remark.min.js --platform=browser --target=es2017",
+    "build:dev": "npx esbuild src/index.ts --bundle --outfile=../public/remark.dev.js --platform=browser --target=es2017 --sourcemap"
   },
   "devDependencies": {
     "esbuild": "^0.20.0",

@@ -776,7 +776,7 @@ private async submitComment(xPct: number, yPct: number, modal: HTMLElement) {
     project_id:  this.projectId,
     x_percent:   xPct,
     y_percent:   yPct,
-    page_path:   window.location.pathname,
+    page_path:   window.location.href,
     client_name: name,
     client_email: email,
     body,
