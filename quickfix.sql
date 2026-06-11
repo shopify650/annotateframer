@@ -11,7 +11,9 @@ ALTER TABLE IF EXISTS projects
   ADD COLUMN IF NOT EXISTS clickup_folder_id TEXT,
   ADD COLUMN IF NOT EXISTS clickup_list_id TEXT,
   ADD COLUMN IF NOT EXISTS clickup_assignee_id TEXT,
-  ADD COLUMN IF NOT EXISTS clickup_auto_sync BOOLEAN DEFAULT false;
+  ADD COLUMN IF NOT EXISTS clickup_auto_sync BOOLEAN DEFAULT false,
+  ADD COLUMN IF NOT EXISTS clickup_page_url_field_id TEXT,
+  ADD COLUMN IF NOT EXISTS clickup_website_field_id TEXT;
 
 -- 2. Add ClickUp columns to comments
 ALTER TABLE IF EXISTS comments

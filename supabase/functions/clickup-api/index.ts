@@ -146,9 +146,38 @@ serve(async (req) => {
       console.log("[ClickUp-API] Active list ID:", activeListId);
       if (!activeListId) throw new Error('ClickUp list not configured')
 
+      // Extract website from page URL if possible
+      let website = '';
+      try {
+        if (comment.page_path) {
+          const url = new URL(comment.page_path);
+          website = url.hostname;
+        }
+      } catch (e) {
+        console.log("[ClickUp-API] Could not parse website from URL:", comment.page_path);
+      }
+
       const taskData: any = {
         name: `[Remark] ${comment.body.substring(0, 50)}${comment.body.length > 50 ? '...' : ''}`,
-        description: `Comment:\n${comment.body}\n\nPage:\n${comment.page_path}\n\nProject:\n${project.name}\n\nDevice:\n${comment.browser || 'Unknown'}\n\nStatus:\n${comment.status}\n\nCreated:\n${comment.created_at}\n\nRemark Comment ID:\n${comment.id}`
+        description: `Comment:\n${comment.body}\n\nPage URL:\n${comment.page_path}\n\nWebsite:\n${website || project.name || 'Unknown'}\n\nProject:\n${project.name}\n\nDevice:\n${comment.browser || 'Unknown'}\n\nStatus:\n${comment.status}\n\nCreated:\n${comment.created_at}\n\nRemark Comment ID:\n${comment.id}`
+      }
+
+      // Add custom fields if the user has configured them
+      const customFields: any[] = [];
+      if (project.clickup_page_url_field_id) {
+        customFields.push({
+          id: project.clickup_page_url_field_id,
+          value: comment.page_path
+        });
+      }
+      if (project.clickup_website_field_id && website) {
+        customFields.push({
+          id: project.clickup_website_field_id,
+          value: website
+        });
+      }
+      if (customFields.length > 0) {
+        taskData.custom_fields = customFields;
       }
 
       console.log("[ClickUp-API] Project clickup_assignee_id:", project.clickup_assignee_id);

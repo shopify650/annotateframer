@@ -1018,6 +1018,32 @@ export function Settings({
                           </select>
                         </div>
                       )}
+
+                      {project.clickup_workspace_id && (
+                        <div className="field-group">
+                          <label className="field-label">Page URL Custom Field ID (Optional)</label>
+                          <input
+                            type="text"
+                            className="field-input"
+                            value={project.clickup_page_url_field_id || ""}
+                            placeholder="Enter ClickUp custom field ID"
+                            onChange={e => onProjectUpdate({ ...project, clickup_page_url_field_id: e.target.value })}
+                          />
+                        </div>
+                      )}
+
+                      {project.clickup_workspace_id && (
+                        <div className="field-group">
+                          <label className="field-label">Website Custom Field ID (Optional)</label>
+                          <input
+                            type="text"
+                            className="field-input"
+                            value={project.clickup_website_field_id || ""}
+                            placeholder="Enter ClickUp custom field ID"
+                            onChange={e => onProjectUpdate({ ...project, clickup_website_field_id: e.target.value })}
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
 

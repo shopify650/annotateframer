@@ -16,6 +16,8 @@ export interface Project {
   clickup_list_id: string | null
   clickup_assignee_id: string | null
   clickup_auto_sync: boolean
+  clickup_page_url_field_id: string | null
+  clickup_website_field_id: string | null
 }
 
 export interface Comment {
