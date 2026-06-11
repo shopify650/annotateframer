@@ -516,6 +516,18 @@ async function handleCreateProject() {
     loadComments()
   }
 
+  async function deleteComment(commentId: string) {
+    try {
+      const { error } = await supabase.from("comments").delete().eq("id", commentId)
+      if (error) throw error
+      framer.notify("Comment deleted successfully!", { variant: "success" })
+      loadComments()
+    } catch (err) {
+      console.error("[AF] Delete comment failed:", err)
+      framer.notify("Failed to delete comment.", { variant: "error" })
+    }
+  }
+
   const displayed = comments.filter(c => filter === "all" ? true : c.status === filter)
   const openCount = comments.filter(c => c.status === "open").length
   const resolvedCount = comments.filter(c => c.status === "resolved").length
@@ -776,6 +788,8 @@ async function handleCreateProject() {
                       key={c.id}
                       comment={c}
                       onClick={() => setActiveCommentId(c.id)}
+                      onDelete={deleteComment}
+                      plan={plan}
                     />
                   ))}
                 </div>

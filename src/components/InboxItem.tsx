@@ -3,9 +3,11 @@ import type { Comment } from "../types"
 interface Props {
   comment: Comment
   onClick: () => void
+  onDelete?: (id: string) => void
+  plan: string
 }
 
-export function InboxItem({ comment, onClick }: Props) {
+export function InboxItem({ comment, onClick, onDelete, plan }: Props) {
   const timeAgo = (date: string) => {
     const diff = Date.now() - new Date(date).getTime()
     const mins = Math.floor(diff / 60000)
@@ -22,6 +24,13 @@ export function InboxItem({ comment, onClick }: Props) {
     : comment.body
 
   const unread = comment.status === "open" // For visual pop
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onDelete) {
+      onDelete(comment.id)
+    }
+  }
 
   return (
     <div 
@@ -47,9 +56,31 @@ export function InboxItem({ comment, onClick }: Props) {
           <span style={{ fontSize: "12px", fontWeight: unread ? "700" : "600", color: unread ? "var(--text)" : "var(--text-sub)" }}>
             {comment.client_name}
           </span>
-          <span style={{ fontSize: "10px", color: "var(--text-sub)" }}>
-            {timeAgo(comment.created_at)}
-          </span>
+          <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+            <span style={{ fontSize: "10px", color: "var(--text-sub)" }}>
+              {timeAgo(comment.created_at)}
+            </span>
+            {comment.status === "resolved" && plan !== "free" && (
+              <button
+                onClick={handleDeleteClick}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "var(--red)",
+                  cursor: "pointer",
+                  padding: "2px 4px",
+                  fontSize: "10px",
+                  fontWeight: "600",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "2px"
+                }}
+                title="Delete comment"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              </button>
+            )}
+          </div>
         </div>
         
         <span style={{ 
