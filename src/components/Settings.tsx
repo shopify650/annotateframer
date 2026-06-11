@@ -232,7 +232,8 @@ export function Settings({
         throw new Error(errorData.error || 'Failed to fetch members');
       }
       const data = await response.json()
-      console.log("[AF] ClickUp members data:", data);
+      console.log("[AF] ClickUp members data:", data)
+      console.log("[AF] ClickUp members array:", data.members)
       setClickUpMembers(data.members || [])
     } catch (err) {
       console.error("[AF] Fetch ClickUp members failed:", err)
@@ -860,9 +861,9 @@ export function Settings({
                               value={project.clickup_workspace_id || ""}
                               onChange={e => onProjectUpdate({ ...project, clickup_workspace_id: e.target.value, clickup_space_id: null, clickup_folder_id: null, clickup_list_id: null })}
                             >
-                              <option value="">Select Workspace</option>
-                              {clickUpWorkspaces.map(workspace => (
-                                <option key={workspace.id} value={workspace.id}>{workspace.name}</option>
+                              <option key="workspace-default" value="">Select Workspace</option>
+                              {clickUpWorkspaces.map((workspace, index) => (
+                                <option key={`workspace-${workspace.id || index}`} value={workspace.id}>{workspace.name}</option>
                               ))}
                             </select>
                           </div>
@@ -875,9 +876,9 @@ export function Settings({
                             value={project.clickup_space_id || ""}
                             onChange={e => onProjectUpdate({ ...project, clickup_space_id: e.target.value, clickup_folder_id: null, clickup_list_id: null })}
                           >
-                            <option value="">Select Space</option>
-                            {clickUpSpaces.map(s => (
-                              <option key={s.id} value={s.id}>{s.name}</option>
+                            <option key="space-default" value="">Select Space</option>
+                            {clickUpSpaces.map((s, index) => (
+                              <option key={`space-${s.id || index}`} value={s.id}>{s.name}</option>
                             ))}
                           </select>
                         </div>
@@ -891,9 +892,9 @@ export function Settings({
                             value={project.clickup_folder_id || ""}
                             onChange={e => onProjectUpdate({ ...project, clickup_folder_id: e.target.value, clickup_list_id: null })}
                           >
-                            <option value="">No Folder</option>
-                            {clickUpFolders.map(f => (
-                              <option key={f.id} value={f.id}>{f.name}</option>
+                            <option key="folder-default" value="">No Folder</option>
+                            {clickUpFolders.map((f, index) => (
+                              <option key={`folder-${f.id || index}`} value={f.id}>{f.name}</option>
                             ))}
                           </select>
                         </div>
@@ -907,9 +908,9 @@ export function Settings({
                             value={project.clickup_list_id || ""}
                             onChange={e => onProjectUpdate({ ...project, clickup_list_id: e.target.value })}
                           >
-                            <option value="">Select List</option>
-                            {clickUpLists.map(l => (
-                              <option key={l.id} value={l.id}>{l.name}</option>
+                            <option key="list-default" value="">Select List</option>
+                            {clickUpLists.map((l, index) => (
+                              <option key={`list-${l.id || index}`} value={l.id}>{l.name}</option>
                             ))}
                           </select>
                         </div>
@@ -923,9 +924,9 @@ export function Settings({
                             value={project.clickup_assignee_id || ""}
                             onChange={e => onProjectUpdate({ ...project, clickup_assignee_id: e.target.value })}
                           >
-                            <option value="">Unassigned</option>
-                            {clickUpMembers.map(m => (
-                              <option key={m.id} value={String(m.id)}>{m.user.username || m.user.email}</option>
+                            <option key="assignee-default" value="">Unassigned</option>
+                            {clickUpMembers.map((m, index) => (
+                              <option key={`member-${m.id || index}`} value={String(m.id)}>{m.user.username || m.user.email}</option>
                             ))}
                           </select>
                         </div>
