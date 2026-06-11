@@ -385,18 +385,18 @@ export function Settings({
     }
   }
 
-  // Sync state if active project changes
+  // Sync state if active project changes (by ID)
   useEffect(() => {
-    console.log("[AF] Project changed:", project)
+    console.log("[AF] Project ID changed:", project?.id)
     setSiteName(project?.name ?? "")
     setSiteUrl(project?.site_url ?? "")
-    // Reset ClickUp state when project changes
+    // Reset ClickUp state only when project ID changes
     setClickUpWorkspaces([])
     setClickUpSpaces([])
     setClickUpFolders([])
     setClickUpLists([])
     setClickUpMembers([])
-  }, [project])
+  }, [project?.id])
 
   // Fetch workspaces when API token is set
   useEffect(() => {
