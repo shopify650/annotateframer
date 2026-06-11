@@ -8,6 +8,14 @@ export interface Project {
   invite_token: string
   plan: PlanType
   created_at: string
+  clickup_enabled: boolean
+  clickup_api_token: string | null
+  clickup_workspace_id: string | null
+  clickup_space_id: string | null
+  clickup_folder_id: string | null
+  clickup_list_id: string | null
+  clickup_assignee_id: string | null
+  clickup_auto_sync: boolean
 }
 
 export interface Comment {
@@ -26,6 +34,9 @@ export interface Comment {
   screenshot?: string | null
   created_at: string
   replies?: Reply[]
+  clickup_task_id?: string | null
+  clickup_task_url?: string | null
+  clickup_synced?: boolean
 }
 
 export interface Reply {

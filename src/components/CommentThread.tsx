@@ -7,9 +7,10 @@ interface Props {
   onResolve: () => void
   siteUrl?: string | null
   inviteToken?: string
+  project?: any // Passed from Dashboard to check settings
 }
 
-export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Props) {
+export function CommentThread({ comment, onResolve, siteUrl, inviteToken, project }: Props) {
   const [reply, setReply] = useState("")
   const [sending, setSending] = useState(false)
   const [expanded, setExpanded] = useState(comment.status !== "resolved")
@@ -28,13 +29,38 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
   async function sendReply() {
     if (!reply.trim()) return
     setSending(true)
-    await supabase.from("replies").insert({
-      comment_id: comment.id,
-      author: "Agency",
-      body: reply.trim(),
-    })
-    setReply("")
-    setSending(false)
+    try {
+      const { data: insertedReply, error: insertError } = await supabase.from("replies").insert({
+        comment_id: comment.id,
+        author: "Agency",
+        body: reply.trim(),
+      }).select()
+
+      if (insertError) throw insertError
+
+      // If comment is synced to ClickUp, sync the reply as a comment
+      if (comment.clickup_synced && comment.clickup_task_id) {
+        const { data: { session: authSession } } = await supabase.auth.getSession()
+        if (authSession && insertedReply && insertedReply.length > 0) {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${authSession.access_token}`
+            },
+            body: JSON.stringify({
+              action: "create-comment",
+              replyId: insertedReply[0].id
+            })
+          })
+        }
+      }
+    } catch (err) {
+      console.error("[AF] Failed to send reply:", err)
+    } finally {
+      setReply("")
+      setSending(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -161,6 +187,52 @@ export function CommentThread({ comment, onResolve, siteUrl, inviteToken }: Prop
                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--green)" }}><polyline points="20 6 9 17 4 12"/></svg>
                 Done
               </button>
+            </div>
+          )}
+
+          {/* ClickUp Sync Status */}
+          {project?.clickup_enabled && (
+            <div className="clickup-section" style={{ marginTop: "12px", borderTop: "1px solid var(--border)", paddingTop: "8px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                <span style={{ fontSize: "10px", fontWeight: "600", color: "var(--text-sub)" }}>
+                  {comment.clickup_synced ? "Synced to ClickUp" : "Not Synced"}
+                </span>
+              </div>
+              {comment.clickup_synced && comment.clickup_task_url ? (
+                <a href={comment.clickup_task_url} target="_blank" rel="noreferrer" style={{ fontSize: "10px", color: "var(--accent)", textDecoration: "none", fontWeight: "600", display: "flex", alignItems: "center", gap: "3px" }}>
+                  Open Task
+                  <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                </a>
+              ) : (
+                <button 
+                  onClick={async () => {
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (!session) return;
+                    setSending(true);
+                    try {
+                      const res = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${session.access_token}` },
+                        body: JSON.stringify({ action: 'create-task', commentId: comment.id, projectId: comment.project_id })
+                      });
+                      if (!res.ok) {
+                        const errorData = await res.json();
+                        throw new Error(errorData.error || 'Failed to sync');
+                      }
+                      // Dashboard's realtime listener will update the comment state automatically
+                    } catch (e: any) {
+                      alert(e.message || "Failed to create task");
+                    } finally {
+                      setSending(false);
+                    }
+                  }}
+                  disabled={sending}
+                  style={{ background: "transparent", border: "1px solid var(--border-hi)", borderRadius: "4px", fontSize: "9px", padding: "3px 8px", color: "var(--text)", cursor: "pointer", fontWeight: "600" }}
+                >
+                  {sending ? "Syncing..." : "Create Task"}
+                </button>
+              )}
             </div>
           )}
         </>

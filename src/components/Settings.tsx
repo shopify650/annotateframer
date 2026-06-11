@@ -26,6 +26,34 @@ interface Props {
 
 const PRO_CHECKOUT_URL = "https://whop.com/buildhaus-templates/annotate-framer-15/"
 
+interface ClickUpWorkspace {
+  id: string
+  name: string
+}
+
+interface ClickUpSpace {
+  id: string
+  name: string
+}
+
+interface ClickUpFolder {
+  id: string
+  name: string
+}
+
+interface ClickUpList {
+  id: string
+  name: string
+}
+
+interface ClickUpMember {
+  id: number
+  user: {
+    username: string
+    email: string
+  }
+}
+
 export function Settings({
   session,
   project,
@@ -59,11 +87,226 @@ export function Settings({
   const [changingPassword, setChangingPassword] = useState(false)
   const [passwordSuccess, setPasswordSuccess] = useState(false)
   const [passwordError, setPasswordError] = useState<string | null>(null)
+  const [clickUpWorkspaces, setClickUpWorkspaces] = useState<ClickUpWorkspace[]>([])
+  const [clickUpSpaces, setClickUpSpaces] = useState<ClickUpSpace[]>([])
+  const [clickUpFolders, setClickUpFolders] = useState<ClickUpFolder[]>([])
+  const [clickUpLists, setClickUpLists] = useState<ClickUpList[]>([])
+  const [clickUpMembers, setClickUpMembers] = useState<ClickUpMember[]>([])
+  const [clickUpLoading, setClickUpLoading] = useState(false)
+  const [oauthWindow, setOauthWindow] = useState<Window | null>(null)
 
   const clean = (url: string) => {
     return url.replace(/^(https?:\/\/)?(www\.)?/, "").replace(/\/$/, "").trim().toLowerCase()
   }
   const isMismatched = plan === "free" && !!detectedSiteUrl && !!project?.site_url && clean(project.site_url) !== clean(detectedSiteUrl)
+
+  const fetchClickUpWorkspaces = async () => {
+    if (!project?.clickup_api_token || !session) return
+    setClickUpLoading(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          action: "fetch-workspaces",
+          token: project.clickup_api_token
+        })
+      })
+      if (!response.ok) throw new Error("Failed to fetch workspaces")
+      const data = await response.json()
+      setClickUpWorkspaces(data.workspaces || [])
+    } catch (err) {
+      console.error("[AF] Fetch ClickUp workspaces failed:", err)
+      framer.notify("Failed to fetch ClickUp workspaces", { variant: "error" })
+    } finally {
+      setClickUpLoading(false)
+    }
+  }
+
+  const fetchClickUpSpaces = async () => {
+    if (!project?.clickup_api_token || !project?.clickup_workspace_id || !session) return
+    setClickUpLoading(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          action: "fetch-spaces",
+          token: project.clickup_api_token,
+          workspaceId: project.clickup_workspace_id
+        })
+      })
+      if (!response.ok) throw new Error("Failed to fetch spaces")
+      const data = await response.json()
+      setClickUpSpaces(data.spaces || [])
+    } catch (err) {
+      console.error("[AF] Fetch ClickUp spaces failed:", err)
+      framer.notify("Failed to fetch ClickUp spaces", { variant: "error" })
+    } finally {
+      setClickUpLoading(false)
+    }
+  }
+
+  const fetchClickUpFolders = async () => {
+    if (!project?.clickup_api_token || !project?.clickup_space_id || !session) return
+    setClickUpLoading(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          action: "fetch-folders",
+          token: project.clickup_api_token,
+          spaceId: project.clickup_space_id
+        })
+      })
+      if (!response.ok) throw new Error("Failed to fetch folders")
+      const data = await response.json()
+      setClickUpFolders(data.folders || [])
+    } catch (err) {
+      console.error("[AF] Fetch ClickUp folders failed:", err)
+      framer.notify("Failed to fetch ClickUp folders", { variant: "error" })
+    } finally {
+      setClickUpLoading(false)
+    }
+  }
+
+  const fetchClickUpLists = async () => {
+    if (!project?.clickup_api_token || !project?.clickup_space_id || !session) return
+    setClickUpLoading(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          action: "fetch-lists",
+          token: project.clickup_api_token,
+          spaceId: project.clickup_space_id,
+          folderId: project.clickup_folder_id
+        })
+      })
+      if (!response.ok) throw new Error("Failed to fetch lists")
+      const data = await response.json()
+      setClickUpLists(data.lists || [])
+    } catch (err) {
+      console.error("[AF] Fetch ClickUp lists failed:", err)
+      framer.notify("Failed to fetch ClickUp lists", { variant: "error" })
+    } finally {
+      setClickUpLoading(false)
+    }
+  }
+
+  const fetchClickUpMembers = async () => {
+    if (!project?.clickup_api_token || !project?.clickup_workspace_id || !session) return
+    setClickUpLoading(true)
+    try {
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({
+          action: "fetch-members",
+          token: project.clickup_api_token,
+          workspaceId: project.clickup_workspace_id
+        })
+      })
+      if (!response.ok) throw new Error("Failed to fetch members")
+      const data = await response.json()
+      setClickUpMembers(data.members || [])
+    } catch (err) {
+      console.error("[AF] Fetch ClickUp members failed:", err)
+      framer.notify("Failed to fetch ClickUp members", { variant: "error" })
+    } finally {
+      setClickUpLoading(false)
+    }
+  }
+
+  const startClickUpOAuth = async () => {
+    try {
+      console.log("[AF] Session:", session);
+      console.log("[AF] Starting ClickUp OAuth...");
+      const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-oauth`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`
+        },
+        body: JSON.stringify({ action: "get-auth-url" })
+      })
+      
+      console.log("[AF] OAuth URL response status:", response.status);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error("[AF] OAuth URL error:", errorData);
+        throw new Error(errorData.error || "Failed to get auth URL");
+      }
+      const { authUrl } = await response.json();
+      console.log("[AF] Got auth URL:", authUrl);
+      
+      // Open OAuth window
+      const width = 600, height = 700;
+      const left = window.screenLeft + (window.outerWidth - width) / 2;
+      const top = window.screenTop + (window.outerHeight - height) / 2;
+      const newWindow = window.open(authUrl, "ClickUp OAuth", `width=${width},height=${height},top=${top},left=${left}`);
+      setOauthWindow(newWindow);
+      
+      // Listen for message from callback page
+      const handleMessage = async (event: MessageEvent) => {
+        console.log("[AF] Received message from callback:", event);
+        // Only accept messages from our own origin (where clickup-callback.html is hosted)
+        if (event.origin !== window.location.origin && !event.origin.includes('supabase.co') && !event.origin.includes('vercel.app')) return;
+        
+        if (event.data.type === 'CLICKUP_OAUTH_CODE') {
+          const code = event.data.code;
+          console.log("[AF] Got OAuth code:", code);
+          
+          // Exchange code for access token
+          const tokenResponse = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-oauth`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${session.access_token}`
+            },
+            body: JSON.stringify({ action: "exchange-code", code })
+          });
+          
+          console.log("[AF] Token exchange response status:", tokenResponse.status);
+          if (tokenResponse.ok) {
+            const { accessToken } = await tokenResponse.json();
+            console.log("[AF] Got access token!");
+            onProjectUpdate({ ...project!, clickup_api_token: accessToken });
+            framer.notify("Connected to ClickUp successfully!", { variant: "success" });
+          } else {
+            const errorData = await tokenResponse.json();
+            console.error("[AF] Token exchange error:", errorData);
+            framer.notify(`Connection failed: ${errorData.error || 'Unknown error'}`, { variant: "error" });
+          }
+          
+          window.removeEventListener('message', handleMessage);
+          setOauthWindow(null);
+        }
+      }
+      
+      window.addEventListener('message', handleMessage);
+    } catch (err) {
+      console.error("[AF] ClickUp OAuth failed:", err);
+      framer.notify(`Failed to start ClickUp OAuth: ${(err as Error).message}`, { variant: "error" });
+    }
+  }
 
   async function handleChangePassword(e: React.FormEvent) {
     e.preventDefault()
@@ -138,7 +381,42 @@ export function Settings({
   useEffect(() => {
     setSiteName(project?.name ?? "")
     setSiteUrl(project?.site_url ?? "")
+    // Reset ClickUp state when project changes
+    setClickUpWorkspaces([])
+    setClickUpSpaces([])
+    setClickUpFolders([])
+    setClickUpLists([])
+    setClickUpMembers([])
   }, [project])
+
+  // Fetch workspaces when API token is set
+  useEffect(() => {
+    if (project?.clickup_enabled && project?.clickup_api_token) {
+      fetchClickUpWorkspaces()
+    }
+  }, [project?.clickup_enabled, project?.clickup_api_token])
+
+  // Fetch spaces and members when workspace is selected
+  useEffect(() => {
+    if (project?.clickup_enabled && project?.clickup_workspace_id) {
+      fetchClickUpSpaces()
+      fetchClickUpMembers()
+    }
+  }, [project?.clickup_enabled, project?.clickup_workspace_id])
+
+  // Fetch folders when space is selected
+  useEffect(() => {
+    if (project?.clickup_enabled && project?.clickup_space_id) {
+      fetchClickUpFolders()
+    }
+  }, [project?.clickup_enabled, project?.clickup_space_id])
+
+  // Fetch lists when space or folder is selected
+  useEffect(() => {
+    if (project?.clickup_enabled && project?.clickup_space_id) {
+      fetchClickUpLists()
+    }
+  }, [project?.clickup_enabled, project?.clickup_space_id, project?.clickup_folder_id])
 
   async function saveProject() {
     if (!project) return
@@ -480,6 +758,191 @@ export function Settings({
               </div>
             )}
           </div>
+        </section>
+      )}
+
+      {/* ClickUp Integration Section */}
+      {project && (
+        <section className="settings-section">
+          <h4 className="settings-section-title">ClickUp Integration</h4>
+          {plan === "free" ? (
+            <div style={{
+              borderRadius: "12px",
+              border: "1px solid rgba(59,130,246,0.2)",
+              background: "linear-gradient(135deg, rgba(59,130,246,0.06), rgba(139,92,246,0.03))",
+              padding: "14px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "10px"
+            }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <div style={{ fontSize: "16px" }}>🔒</div>
+                <div>
+                  <span style={{ fontSize: "12px", fontWeight: "700", color: "#3b82f6", display: "block" }}>ClickUp Integration</span>
+                  <span style={{ fontSize: "10px", color: "var(--text-sub)", lineHeight: "1.4" }}>
+                    Sync client feedback to ClickUp tasks automatically. Requires Pro or Agency plan.
+                  </span>
+                </div>
+              </div>
+              <button
+                onClick={() => window.open(PRO_CHECKOUT_URL, "_blank")}
+                style={{
+                  width: "100%", padding: "8px", borderRadius: "8px",
+                  background: "linear-gradient(135deg, #3b82f6, #8b5cf6)",
+                  border: "none", color: "#fff", fontSize: "11px",
+                  fontWeight: "700", cursor: "pointer", letterSpacing: "0.3px"
+                }}
+              >
+                Upgrade to Pro →
+              </button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+              <div className="field-group" style={{ flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                <input 
+                  type="checkbox" 
+                  id="clickupEnabled" 
+                  checked={project.clickup_enabled || false}
+                  onChange={e => onProjectUpdate({ ...project, clickup_enabled: e.target.checked })}
+                  style={{ accentColor: "var(--accent)", cursor: "pointer", width: "16px", height: "16px" }}
+                />
+                <label htmlFor="clickupEnabled" className="field-label" style={{ margin: 0, cursor: "pointer" }}>
+                  <span style={{ fontSize: "12px", color: "var(--text)" }}>Enable ClickUp Integration</span>
+                </label>
+              </div>
+
+              {project.clickup_enabled && (
+                    <>
+                      <div className="field-group">
+                        {!project.clickup_api_token ? (
+                          <>
+                            <label className="field-label">Connect your ClickUp account</label>
+                            <button
+                              onClick={startClickUpOAuth}
+                              className="btn-primary"
+                              style={{ width: "100%", padding: "10px" }}
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: "8px" }}><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+                              Connect to ClickUp
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
+                              <label className="field-label" style={{ marginBottom: 0 }}>ClickUp Connected</label>
+                              <button
+                                onClick={() => onProjectUpdate({ ...project!, clickup_api_token: null, clickup_workspace_id: null, clickup_space_id: null, clickup_folder_id: null, clickup_list_id: null })}
+                                className="btn-ghost btn-sm"
+                                style={{ color: "var(--red)" }}
+                              >
+                                Disconnect
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                      
+                      {project.clickup_api_token && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px', background: 'var(--surface2)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                          {clickUpLoading && <div style={{ fontSize: '10px', color: 'var(--text-sub)' }}>Loading...</div>}
+                          
+                          <div className="field-group">
+                            <label className="field-label">Workspace</label>
+                            <select
+                              className="field-input"
+                              value={project.clickup_workspace_id || ""}
+                              onChange={e => onProjectUpdate({ ...project, clickup_workspace_id: e.target.value, clickup_space_id: null, clickup_folder_id: null, clickup_list_id: null })}
+                            >
+                              <option value="">Select Workspace</option>
+                              {clickUpWorkspaces.map(workspace => (
+                                <option key={workspace.id} value={workspace.id}>{workspace.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                      
+                      {project.clickup_workspace_id && (
+                        <div className="field-group">
+                          <label className="field-label">Space</label>
+                          <select
+                            className="field-input"
+                            value={project.clickup_space_id || ""}
+                            onChange={e => onProjectUpdate({ ...project, clickup_space_id: e.target.value, clickup_folder_id: null, clickup_list_id: null })}
+                          >
+                            <option value="">Select Space</option>
+                            {clickUpSpaces.map(s => (
+                              <option key={s.id} value={s.id}>{s.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      
+                      {project.clickup_space_id && clickUpFolders.length > 0 && (
+                        <div className="field-group">
+                          <label className="field-label">Folder (Optional)</label>
+                          <select
+                            className="field-input"
+                            value={project.clickup_folder_id || ""}
+                            onChange={e => onProjectUpdate({ ...project, clickup_folder_id: e.target.value, clickup_list_id: null })}
+                          >
+                            <option value="">No Folder</option>
+                            {clickUpFolders.map(f => (
+                              <option key={f.id} value={f.id}>{f.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      
+                      {project.clickup_space_id && (
+                        <div className="field-group">
+                          <label className="field-label">List</label>
+                          <select
+                            className="field-input"
+                            value={project.clickup_list_id || ""}
+                            onChange={e => onProjectUpdate({ ...project, clickup_list_id: e.target.value })}
+                          >
+                            <option value="">Select List</option>
+                            {clickUpLists.map(l => (
+                              <option key={l.id} value={l.id}>{l.name}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                      
+                      {project.clickup_workspace_id && (
+                        <div className="field-group">
+                          <label className="field-label">Default Assignee</label>
+                          <select
+                            className="field-input"
+                            value={project.clickup_assignee_id || ""}
+                            onChange={e => onProjectUpdate({ ...project, clickup_assignee_id: e.target.value })}
+                          >
+                            <option value="">Unassigned</option>
+                            {clickUpMembers.map(m => (
+                              <option key={m.id} value={String(m.id)}>{m.user.username || m.user.email}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="field-group" style={{ flexDirection: "row", alignItems: "center", gap: "8px" }}>
+                    <input 
+                      type="checkbox" 
+                      id="clickupAutoSync" 
+                      checked={project.clickup_auto_sync || false}
+                      onChange={e => onProjectUpdate({ ...project, clickup_auto_sync: e.target.checked })}
+                      style={{ accentColor: "var(--accent)", cursor: "pointer", width: "16px", height: "16px" }}
+                    />
+                    <label htmlFor="clickupAutoSync" className="field-label" style={{ margin: 0, cursor: "pointer", display: "flex", flexDirection: "column", gap: "2px" }}>
+                      <span style={{ fontSize: "12px", color: "var(--text)" }}>Auto-Create Tasks</span>
+                      <span style={{ fontSize: "10.5px", color: "var(--text-sub)", fontWeight: 400 }}>Every new client comment automatically creates a task.</span>
+                    </label>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
         </section>
       )}
 

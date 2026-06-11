@@ -349,6 +349,41 @@ async function handleCreateProject() {
     if (data) setComments(data as Comment[])
   }, [project])
 
+  // Auto-sync new comments to ClickUp
+  useEffect(() => {
+    if (!project || !session) return
+    
+    // Find new comments that need syncing
+    const unsyncedComments = comments.filter(c => 
+      !c.clickup_synced && 
+      project.clickup_enabled && 
+      project.clickup_auto_sync && 
+      project.clickup_list_id
+    )
+
+    unsyncedComments.forEach(async comment => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${session.access_token}`
+          },
+          body: JSON.stringify({
+            action: "create-task",
+            commentId: comment.id,
+            projectId: project.id
+          })
+        })
+        if (response.ok) {
+          loadComments()
+        }
+      } catch (err) {
+        console.error("[AF] Auto-sync failed:", err)
+      }
+    })
+  }, [comments, project, session, loadComments])
+
   useEffect(() => {
     if (!project) return
     loadComments()

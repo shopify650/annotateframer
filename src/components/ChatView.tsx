@@ -36,13 +36,38 @@ export function ChatView({ comment, onClose, onResolve, siteUrl, inviteToken }: 
   async function sendReply() {
     if (!reply.trim()) return
     setSending(true)
-    await supabase.from("replies").insert({
-      comment_id: comment.id,
-      author: "Agency",
-      body: reply.trim(),
-    })
-    setReply("")
-    setSending(false)
+    try {
+      const { data: insertedReply, error: insertError } = await supabase.from("replies").insert({
+        comment_id: comment.id,
+        author: "Agency",
+        body: reply.trim(),
+      }).select()
+
+      if (insertError) throw insertError
+
+      // If comment is synced to ClickUp, sync the reply as a comment
+      if (comment.clickup_synced && comment.clickup_task_id) {
+        const { data: { session: authSession } } = await supabase.auth.getSession()
+        if (authSession && insertedReply && insertedReply.length > 0) {
+          await fetch(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/clickup-api`, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${authSession.access_token}`
+            },
+            body: JSON.stringify({
+              action: "create-comment",
+              replyId: insertedReply[0].id
+            })
+          })
+        }
+      }
+    } catch (err) {
+      console.error("[AF] Failed to send reply:", err)
+    } finally {
+      setReply("")
+      setSending(false)
+    }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Connecting to ClickUp…</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+      background: #0e0e10;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .container { max-width: 320px; padding: 24px; }
+    .spinner {
+      width: 36px; height: 36px;
+      border: 3px solid #1e293b;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .check-icon { display: none; margin: 0 auto 16px; }
+    h2 { font-size: 18px; font-weight: 600; margin-bottom: 8px; }
+    p { font-size: 13px; color: #94a3b8; line-height: 1.5; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="spinner" id="spinner"></div>
+    <h2 id="title">Connecting to ClickUp…</h2>
+    <p id="message">Please wait while we complete the connection.</p>
+  </div>
+
+  <script>
+    // Parse ClickUp code from URL
+    const searchParams = new URLSearchParams(window.location.search);
+    const code = searchParams.get('code');
+
+    const titleEl = document.getElementById('title');
+    const messageEl = document.getElementById('message');
+    const spinnerEl = document.getElementById('spinner');
+
+    if (code) {
+      // Send code to parent window
+      if (window.opener) {
+        window.opener.postMessage({
+          type: 'CLICKUP_OAUTH_CODE',
+          code: code
+        }, '*'); // Use '*' to allow message delivery to the Framer plugin iframe origin
+
+        titleEl.textContent = 'Connected Successfully!';
+        messageEl.textContent = 'You can close this window now.';
+        spinnerEl.style.display = 'none';
+        setTimeout(() => window.close(), 2000);
+      } else {
+        titleEl.textContent = 'Error';
+        messageEl.textContent = 'No parent window found. Please try again.';
+        spinnerEl.style.display = 'none';
+      }
+    } else {
+      titleEl.textContent = 'Error';
+      messageEl.textContent = 'No authorization code found. Please try again.';
+      spinnerEl.style.display = 'none';
+    }
+  </script>
+</body>
+</html>
