@@ -131,11 +131,11 @@ serve(async (req) => {
     if (action === 'create-task') {
       console.log("[ClickUp-API] Creating task...");
       const { data: comment } = await supabaseClient.from('comments').select('*').eq('id', commentId).single()
-      console.log("[ClickUp-API] Comment found:", comment);
+      console.log("[ClickUp-API] Comment found:", JSON.stringify(comment, null, 2));
       if (!comment) throw new Error('Comment not found')
       
       const { data: project } = await supabaseClient.from('projects').select('*').eq('id', projectId).single()
-      console.log("[ClickUp-API] Project found:", project);
+      console.log("[ClickUp-API] Project found:", JSON.stringify(project, null, 2));
       if (!project) throw new Error('Project not found')
 
       const activeToken = project.clickup_api_token || activeClickupToken
@@ -148,26 +148,30 @@ serve(async (req) => {
 
       // Extract website from page URL if possible
       let website = '';
+      let pageUrl = comment.page_path;
+      console.log("[ClickUp-API] Raw comment.page_path:", pageUrl);
       try {
-        if (comment.page_path) {
-          const url = new URL(comment.page_path);
+        if (pageUrl) {
+          const url = new URL(pageUrl);
           website = url.hostname;
         }
       } catch (e) {
-        console.log("[ClickUp-API] Could not parse website from URL:", comment.page_path);
+        console.log("[ClickUp-API] Could not parse website from URL:", e);
       }
+      console.log("[ClickUp-API] Extracted website:", website);
 
       const taskData: any = {
         name: `[Remark] ${comment.body.substring(0, 50)}${comment.body.length > 50 ? '...' : ''}`,
-        description: `Comment:\n${comment.body}\n\nPage URL:\n${comment.page_path}\n\nWebsite:\n${website || project.name || 'Unknown'}\n\nProject:\n${project.name}\n\nDevice:\n${comment.browser || 'Unknown'}\n\nStatus:\n${comment.status}\n\nCreated:\n${comment.created_at}\n\nRemark Comment ID:\n${comment.id}`
+        description: `Comment:\n${comment.body}\n\nPage URL:\n${pageUrl}\n\nWebsite:\n${website || project.name || 'Unknown'}\n\nProject:\n${project.name}\n\nDevice:\n${comment.browser || 'Unknown'}\n\nStatus:\n${comment.status}\n\nCreated:\n${comment.created_at}\n\nRemark Comment ID:\n${comment.id}`
       }
 
       // Add custom fields if the user has configured them
       const customFields: any[] = [];
+      console.log("[ClickUp-API] Custom fields config: page_url_field_id =", project.clickup_page_url_field_id, ", website_field_id =", project.clickup_website_field_id);
       if (project.clickup_page_url_field_id) {
         customFields.push({
           id: project.clickup_page_url_field_id,
-          value: comment.page_path
+          value: pageUrl
         });
       }
       if (project.clickup_website_field_id && website) {
