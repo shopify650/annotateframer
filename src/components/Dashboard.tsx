@@ -892,6 +892,7 @@ async function handleCreateProject() {
                 loadOrCreateProject()
               }
             }}
+            setTab={setTab}
           />
         )}
 

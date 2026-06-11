@@ -22,6 +22,7 @@ interface Props {
   onHideManualSetup: () => void
   permissionError: string | null
   detectedSiteUrl?: string
+  setTab: (tab: string) => void
 }
 
 const PRO_CHECKOUT_URL = "https://whop.com/buildhaus-templates/annotate-framer-15/"
@@ -72,7 +73,8 @@ export function Settings({
   showManualSetup,
   onHideManualSetup,
   permissionError,
-  detectedSiteUrl = ""
+  detectedSiteUrl = "",
+  setTab
 }: Props) {
   const [siteName, setSiteName] = useState(project?.name ?? "")
   const [siteUrl, setSiteUrl] = useState(project?.site_url ?? "")
