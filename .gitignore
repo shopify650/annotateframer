@@ -1,12 +1,23 @@
 # Environment variables
 .env
 
-# Supabase CLI temp files
-supabase/.temp/
-
-# IDE files
-.vscode/
+# Node modules (never commit)
+node_modules/
 
 # Build files
 dist/
 build/
+
+# Supabase CLI
+supabase/.temp/
+
+# IDE
+.vscode/
+.idea/
+
+# Plugin bundle
+plugin.zip
+
+# OS files
+.DS_Store
+Thumbs.db
