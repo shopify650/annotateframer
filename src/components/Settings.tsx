@@ -262,7 +262,8 @@ export function Settings({
           body: "This is a test comment from AnnotateFrame! 🎉",
           page_path: window.location.href,
           browser: navigator.userAgent,
-          status: "open"
+          status: "open",
+          client_name: "Test User"
         })
         .select()
         .single();
