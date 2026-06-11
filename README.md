@@ -1,4 +1,4 @@
-# AnnotateFrame 📌
+# Remark 📌
 
 **Client collaboration & commenting plugin for Framer.**  
 Agencies install it → clients visit the live URL → click anywhere → leave pinned comments.
@@ -63,7 +63,7 @@ npm run dev
 cd client-script
 npm install
 npm run build
-# Upload build/annotateframe.min.js to your CDN
+# Upload build/remark.min.js to your CDN
 # Update the URL in src/lib/inject.ts
 ```
 

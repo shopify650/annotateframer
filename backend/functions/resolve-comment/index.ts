@@ -33,14 +33,14 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "AnnotateFrame <notify@annotateframe.com>",
+        from: "Remark <notify@annotateframe.com>",
         to: comment.client_email,
         subject: "✅ Your feedback has been resolved!",
         html: `
           <div style="font-family: Inter, sans-serif; max-width: 560px; margin: auto; background: #0f0f10; color: #e8e8ed; padding: 32px; border-radius: 16px;">
             <div style="margin-bottom: 24px;">
               <span style="font-size: 24px;">📌</span>
-              <strong style="font-size: 20px; margin-left: 8px;">AnnotateFrame</strong>
+              <strong style="font-size: 20px; margin-left: 8px;">Remark</strong>
             </div>
             <h2 style="color: #22c55e; margin-bottom: 8px;">Feedback Resolved ✅</h2>
             <p style="color: #888899; margin-bottom: 16px;">
@@ -49,7 +49,7 @@ serve(async (req) => {
             <div style="background: #1a1a1e; border-left: 3px solid #22c55e; padding: 14px 16px; border-radius: 8px;">
               <p style="margin: 0; font-size: 14px; font-style: italic; color: #e8e8ed;">"${comment.body}"</p>
             </div>
-            <p style="color: #444; font-size: 11px; margin-top: 32px;">AnnotateFrame · Framer Client Collaboration</p>
+            <p style="color: #444; font-size: 11px; margin-top: 32px;">Remark · Framer Client Collaboration</p>
           </div>
         `,
       }),

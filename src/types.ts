@@ -1,4 +1,4 @@
-// AnnotateFrame — Type Definitions
+// Remark — Type Definitions
 
 export interface Project {
   id: string

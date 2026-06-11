@@ -259,7 +259,7 @@ export function Settings({
         .from('comments')
         .insert({
           project_id: project.id,
-          body: "This is a test comment from AnnotateFrame! 🎉",
+          body: "This is a test comment from Remark! 🎉",
           page_path: window.location.href,
           browser: navigator.userAgent,
           status: "open",
@@ -601,7 +601,7 @@ export function Settings({
               <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "var(--accent)" }}><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
               <div>
                 <strong>Script not installed</strong>
-                <p style={{ fontSize: "9px" }}>Inject AnnotateFrame script into your live site to collect feedback.</p>
+                <p style={{ fontSize: "9px" }}>Inject Remark script into your live site to collect feedback.</p>
               </div>
             </div>
             <button className="btn-install" style={{ padding: "4px 8px", fontSize: "10px" }} onClick={onInstall} disabled={installing}>
@@ -640,12 +640,12 @@ export function Settings({
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "6px", fontSize: "9px", color: "var(--text-sub)", paddingLeft: "4px", borderLeft: "2px solid var(--border)" }}>
               <div><strong>🟢 To Activate:</strong> Copy the code below, paste it in <strong>Framer Settings → Custom Code → End of &lt;body&gt; tag</strong>, and Publish.</div>
-              <div><strong>🔴 To Pause:</strong> Go to <strong>Framer Settings → Custom Code</strong>, delete the AnnotateFrame code block, and Publish.</div>
+              <div><strong>🔴 To Pause:</strong> Go to <strong>Framer Settings → Custom Code</strong>, delete the Remark code block, and Publish.</div>
             </div>
             <div style={{ position: "relative", marginTop: "4px" }}>
               <textarea
                 readOnly
-                value={`<!-- AnnotateFrame Start -->\n<script>\n  window.ANNOTATEFRAME_PROJECT_ID = "${project.id}";\n  window.ANNOTATEFRAME_SUPABASE_URL = "${import.meta.env.VITE_SUPABASE_URL}";\n  window.ANNOTATEFRAME_ANON_KEY = "${import.meta.env.VITE_SUPABASE_ANON_KEY}";\n</script>\n<script src="https://project-pymvu.vercel.app/annotateframe.min.js" defer></script>\n<!-- AnnotateFrame End -->`}
+                value={`<!-- Remark Start -->\n<script>\n  window.REMARK_PROJECT_ID = "${project.id}";\n  window.REMARK_SUPABASE_URL = "${import.meta.env.VITE_SUPABASE_URL}";\n  window.REMARK_ANON_KEY = "${import.meta.env.VITE_SUPABASE_ANON_KEY}";\n</script>\n<script src="https://project-pymvu.vercel.app/remark.min.js" defer></script>\n<!-- Remark End -->`}
                 style={{
                   width: "100%",
                   height: "80px",
@@ -664,7 +664,7 @@ export function Settings({
               />
               <button
                 onClick={() => {
-                  const code = `<!-- AnnotateFrame Start -->\n<script>\n  window.ANNOTATEFRAME_PROJECT_ID = "${project.id}";\n  window.ANNOTATEFRAME_SUPABASE_URL = "${import.meta.env.VITE_SUPABASE_URL}";\n  window.ANNOTATEFRAME_ANON_KEY = "${import.meta.env.VITE_SUPABASE_ANON_KEY}";\n</script>\n<script src="https://project-pymvu.vercel.app/annotateframe.min.js" defer></script>\n<!-- AnnotateFrame End -->`
+                  const code = `<!-- Remark Start -->\n<script>\n  window.REMARK_PROJECT_ID = "${project.id}";\n  window.REMARK_SUPABASE_URL = "${import.meta.env.VITE_SUPABASE_URL}";\n  window.REMARK_ANON_KEY = "${import.meta.env.VITE_SUPABASE_ANON_KEY}";\n</script>\n<script src="https://project-pymvu.vercel.app/remark.min.js" defer></script>\n<!-- Remark End -->`
                   navigator.clipboard.writeText(code)
                   framer.notify("Manual script copied!", { variant: "success", durationMs: 2000 })
                 }}
@@ -1114,7 +1114,7 @@ export function Settings({
             {showPrivacy && (
               <div style={{ padding: "0 12px 12px", fontSize: "10px", color: "var(--text-sub)", lineHeight: "1.4", borderTop: "1px solid var(--border)" }}>
                 <p style={{ margin: "8px 0 0" }}>
-                  AnnotateFrame is dedicated to protecting your data. We collect commenting metrics (coordinates, comment body, viewport widths, and client names/emails) strictly to display visual pins on your Framer site and sync them to your dashboard.
+                  Remark is dedicated to protecting your data. We collect commenting metrics (coordinates, comment body, viewport widths, and client names/emails) strictly to display visual pins on your Framer site and sync them to your dashboard.
                 </p>
                 <p style={{ margin: "6px 0 0" }}>
                   All communications with Supabase are fully protected via Row Level Security (RLS). We never sell, track, or share your clients' personal data.
@@ -1159,7 +1159,7 @@ export function Settings({
             {showRefund && (
               <div style={{ padding: "0 12px 12px", fontSize: "10px", color: "var(--text-sub)", lineHeight: "1.4", borderTop: "1px solid var(--border)" }}>
                 <p style={{ margin: "8px 0 0" }}>
-                  We stand by the quality of AnnotateFrame. If you run into technical issues or the plugin does not work as advertised on your Framer sites, we offer an **80% money-back guarantee within 14 days** of purchase.
+                  We stand by the quality of Remark. If you run into technical issues or the plugin does not work as advertised on your Framer sites, we offer an **80% money-back guarantee within 14 days** of purchase.
                 </p>
                 <p style={{ margin: "6px 0 0" }}>
                   To request a refund, please <a href="https://whop.com/joined/buildhaus-templates/" target="_blank" style={{ color: "var(--accent)", textDecoration: "underline" }}>open a support chat directly in your Whop checkout account</a> or email us at support@annotateframe.com.

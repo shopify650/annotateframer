@@ -1,7 +1,7 @@
 // ==============================================
-// ANNOTATEFRAME CLIENT SCRIPT v1.1
+// REMARK CLIENT SCRIPT v1.1
 // Self-contained vanilla TS — injected into live Framer sites
-// Build: npx esbuild src/index.ts --bundle --minify --outfile=build/annotateframe.min.js --platform=browser
+// Build: npx esbuild src/index.ts --bundle --minify --outfile=build/remark.min.js --platform=browser
 // ==============================================
 
 interface CommentPayload {
@@ -16,7 +16,7 @@ interface CommentPayload {
   viewport_w: number
 }
 
-class AnnotateFrame {
+class Remark {
   private projectId: string
   private supabaseUrl: string
   private anonKey: string
@@ -37,11 +37,11 @@ class AnnotateFrame {
   private currentScreenshotPromise: Promise<string> | null = null
 
   constructor() {
-    console.log("[AF] Initializing AnnotateFrame...");
+    console.log("[AF] Initializing Remark...");
     const w = window as any
-    this.projectId  = w.ANNOTATEFRAME_PROJECT_ID   || ""
-    this.supabaseUrl = w.ANNOTATEFRAME_SUPABASE_URL || ""
-    this.anonKey    = w.ANNOTATEFRAME_ANON_KEY      || ""
+    this.projectId  = w.REMARK_PROJECT_ID   || ""
+    this.supabaseUrl = w.REMARK_SUPABASE_URL || ""
+    this.anonKey    = w.REMARK_ANON_KEY      || ""
 
     if (!this.projectId || !this.supabaseUrl || !this.anonKey) {
       console.error("[AF] Missing configuration. Check if the script is properly injected.");
@@ -1142,7 +1142,7 @@ private async submitComment(xPct: number, yPct: number, modal: HTMLElement) {
 
 // Auto-init on DOM ready
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", () => new AnnotateFrame())
+  document.addEventListener("DOMContentLoaded", () => new Remark())
 } else {
-  new AnnotateFrame()
+  new Remark()
 }

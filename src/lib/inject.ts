@@ -1,25 +1,25 @@
 import { framer } from "framer-plugin"
 
-const SCRIPT_MARKER = "annotateframe.min.js"
+const SCRIPT_MARKER = "remark.min.js"
 
 /**
- * Injects the AnnotateFrame client script into the live published Framer site
+ * Injects the Remark client script into the live published Framer site
  * using the native framer.setCustomCode() API.
  */
-export async function injectAnnotateFrameScript(
+export async function injectRemarkScript(
   projectId: string,
   supabaseUrl: string,
   supabaseAnonKey: string
 ): Promise<void> {
   // Live Vercel URL
-  const scriptUrl = "https://project-pymvu.vercel.app/annotateframe.min.js"
+  const scriptUrl = "https://project-pymvu.vercel.app/remark.min.js"
 
   const html = `
 <!-- Remark Start -->
 <script>
-  window.ANNOTATEFRAME_PROJECT_ID = "${projectId}";
-  window.ANNOTATEFRAME_SUPABASE_URL = "${supabaseUrl}";
-  window.ANNOTATEFRAME_ANON_KEY = "${supabaseAnonKey}";
+  window.REMARK_PROJECT_ID = "${projectId}";
+  window.REMARK_SUPABASE_URL = "${supabaseUrl}";
+  window.REMARK_ANON_KEY = "${supabaseAnonKey}";
 </script>
 <script src="${scriptUrl}" defer></script>
 <!-- Remark End -->
@@ -30,9 +30,9 @@ export async function injectAnnotateFrameScript(
 }
 
 /**
- * Removes the AnnotateFrame script from the site (pause / uninstall).
+ * Removes the Remark script from the site (pause / uninstall).
  */
-export async function removeAnnotateFrameScript(): Promise<void> {
+export async function removeRemarkScript(): Promise<void> {
   await framer.setCustomCode({ html: null, location: "bodyEnd" })
   console.log("[Remark] Script removed")
 }

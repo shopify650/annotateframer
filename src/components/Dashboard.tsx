@@ -1,7 +1,7 @@
 import { useEffect, useState, useCallback } from "react"
 import { supabase } from "../lib/supabase"
 import { framer } from "framer-plugin"
-import { injectAnnotateFrameScript, removeAnnotateFrameScript, isScriptInstalled } from "../lib/inject"
+import { injectRemarkScript, removeRemarkScript, isScriptInstalled } from "../lib/inject"
 import { InboxItem } from "./InboxItem"
 import { ChatView } from "./ChatView"
 import { InviteLink } from "./InviteLink"
@@ -475,13 +475,13 @@ async function handleCreateProject() {
     setInstalling(true)
     setPermissionError(null)
     try {
-      await injectAnnotateFrameScript(
+      await injectRemarkScript(
         project.id,
         import.meta.env.VITE_SUPABASE_URL,
         import.meta.env.VITE_SUPABASE_ANON_KEY
       )
       setInstalled(true)
-      framer.notify("AnnotateFrame comments are now active!", { variant: "success", durationMs: 3000 })
+      framer.notify("Remark comments are now active!", { variant: "success", durationMs: 3000 })
     } catch (err) {
       console.error("[AF] Install failed:", err)
       const errMsg = (err as Error).message || String(err)
@@ -496,7 +496,7 @@ async function handleCreateProject() {
   async function handleRemove() {
     setPermissionError(null)
     try {
-      await removeAnnotateFrameScript()
+      await removeRemarkScript()
       setInstalled(false)
       framer.notify("Comments paused successfully.", { variant: "info", durationMs: 3000 })
     } catch (err) {
@@ -534,7 +534,7 @@ async function handleCreateProject() {
       {/* ── main content view ── */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
         
-        {/* TAB: PROJECTS (Main view showing the AnnotateFrame specs) */}
+        {/* TAB: PROJECTS (Main view showing the Remark specs) */}
         {tab === "projects" && (
           <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden" }}>
             
