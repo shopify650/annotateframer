@@ -290,12 +290,26 @@ export function Settings({
         })
       });
 
+      const responseText = await response.text();
+      console.log("[AF] ClickUp API response text:", responseText);
+      
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = JSON.parse(responseText);
+        } catch (e) {
+          throw new Error(responseText);
+        }
         throw new Error(errorData.error || "Failed to create test task");
       }
       
-      const data = await response.json();
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (e) {
+        throw new Error("ClickUp function returned invalid JSON: " + responseText);
+      }
+      
       console.log("[AF] Test task created successfully:", data);
       framer.notify("Test task created successfully in ClickUp! 🎉", { variant: "success" });
 
