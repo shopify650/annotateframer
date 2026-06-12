@@ -134,6 +134,7 @@ export function Setup({ onAuth }: Props) {
         : `${OAUTH_CALLBACK_URL}?loginId=${loginId}`
 
       console.log('Generated redirect URL:', redirectUrl)
+      alert(`Generated redirect URL:\n${redirectUrl}\n\nIs Dev Mode: ${isDevelopment}`)
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -148,6 +149,7 @@ export function Setup({ onAuth }: Props) {
       })
       
       console.log('Google OAuth Auth URL:', data?.url)
+      alert(`Google OAuth Auth URL:\n${data?.url}`)
       
       if (error) {
         clearInterval(poll)
