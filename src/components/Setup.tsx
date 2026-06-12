@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { supabase, OAUTH_CALLBACK_URL } from "../lib/supabase"
+import { supabase } from "../lib/supabase"
 
 interface Props {
   onAuth: (session: any) => void
@@ -128,10 +128,9 @@ export function Setup({ onAuth }: Props) {
         }
       }, 1500)
 
-      const redirectUrl = `${OAUTH_CALLBACK_URL}?loginId=${loginId}`
+      const redirectUrl = `${window.location.origin}/callback.html?loginId=${loginId}`
 
       console.log('Generated redirect URL:', redirectUrl)
-      alert(`Generated redirect URL:\n${redirectUrl}\n\nLogin ID:\n${loginId}`)
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -146,7 +145,6 @@ export function Setup({ onAuth }: Props) {
       })
       
       console.log('Google OAuth Auth URL:', data?.url)
-      alert(`Google OAuth Auth URL:\n${data?.url}`)
       
       if (error) {
         clearInterval(poll)
