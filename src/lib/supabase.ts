@@ -15,5 +15,4 @@ export const supabase = createClient(
 )
 
 // OAuth callback URLs - stable production URL on Vercel
-const isDevelopment = import.meta.env.DEV
-export const OAUTH_CALLBACK_URL_PROD = "https://annotateframe-auth.vercel.app/callback.html"
+export const OAUTH_CALLBACK_URL_PROD = "https://project-pymvu.vercel.app/callback.html"
