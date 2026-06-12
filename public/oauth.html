@@ -73,7 +73,7 @@
       spinnerEl.style.display = 'none';
       titleEl.textContent = 'Login Failed';
       titleEl.style.color = '#f87171';
-      messageEl.textContent = msg;
+      messageEl.textContent = `${msg}\nSearch: ${window.location.search}\nHash: ${window.location.hash}`;
     }
 
     // ─── MAIN LOGIC ─────────────────────────────────────────
