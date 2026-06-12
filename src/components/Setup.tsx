@@ -128,13 +128,9 @@ export function Setup({ onAuth }: Props) {
         }
       }, 1500)
 
-      const isDevelopment = import.meta.env.DEV
-      const redirectUrl = isDevelopment 
-        ? `${window.location.origin}/oauth.html?loginId=${loginId}`
-        : `${OAUTH_CALLBACK_URL}?loginId=${loginId}`
+      const redirectUrl = `${window.location.origin}/callback.html?loginId=${loginId}`
 
       console.log('Generated redirect URL:', redirectUrl)
-      alert(`Generated redirect URL:\n${redirectUrl}\n\nIs Dev Mode: ${isDevelopment}`)
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -149,7 +145,6 @@ export function Setup({ onAuth }: Props) {
       })
       
       console.log('Google OAuth Auth URL:', data?.url)
-      alert(`Google OAuth Auth URL:\n${data?.url}`)
       
       if (error) {
         clearInterval(poll)
