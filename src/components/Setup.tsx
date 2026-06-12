@@ -128,11 +128,16 @@ export function Setup({ onAuth }: Props) {
         }
       }, 1500)
 
+      const isDevelopment = import.meta.env.DEV
+      const redirectUrl = isDevelopment 
+        ? `${window.location.origin}/oauth.html?loginId=${loginId}`
+        : `${OAUTH_CALLBACK_URL}?loginId=${loginId}`
+
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
           skipBrowserRedirect: true, // Crucial for Framer plugins (iframes)
-          redirectTo: `${window.location.origin}/callback.html?loginId=${loginId}`,
+          redirectTo: redirectUrl,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
