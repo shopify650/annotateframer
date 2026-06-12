@@ -13,3 +13,7 @@ export const supabase = createClient(
   supabaseUrl || "https://placeholder.supabase.co",
   supabaseAnonKey || "placeholder-key"
 )
+
+// OAuth callback URLs - stable production URL on Vercel
+const isDevelopment = import.meta.env.DEV
+export const OAUTH_CALLBACK_URL_PROD = "https://annotateframe-auth.vercel.app/callback.html"

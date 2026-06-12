@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { supabase } from "../lib/supabase"
+import { supabase, OAUTH_CALLBACK_URL_PROD } from "../lib/supabase"
 
 interface Props {
   onAuth: (session: any) => void
@@ -128,7 +128,10 @@ export function Setup({ onAuth }: Props) {
         }
       }, 1500)
 
-      const redirectUrl = `${window.location.origin}/callback.html?loginId=${loginId}`
+      const isDevelopment = import.meta.env.DEV
+      const redirectUrl = isDevelopment
+        ? `${window.location.origin}/callback.html?loginId=${loginId}`
+        : `${OAUTH_CALLBACK_URL_PROD}?loginId=${loginId}`
 
       console.log('Generated redirect URL:', redirectUrl)
 
