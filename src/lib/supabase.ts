@@ -13,3 +13,8 @@ export const supabase = createClient(
   supabaseUrl || "https://placeholder.supabase.co",
   supabaseAnonKey || "placeholder-key"
 )
+
+// OAuth callback URL configuration
+export const OAUTH_CALLBACK_URL = import.meta.env.DEV
+  ? null
+  : "https://project-pymvu.vercel.app/oauth.html"

@@ -129,7 +129,9 @@ export function Setup({ onAuth }: Props) {
       }, 1500)
 
       const isDevelopment = import.meta.env.DEV
-      const redirectUrl = `${window.location.origin}/callback.html?loginId=${loginId}`
+      const redirectUrl = isDevelopment 
+        ? `${window.location.origin}/oauth.html?loginId=${loginId}`
+        : `${OAUTH_CALLBACK_URL}?loginId=${loginId}`
 
       console.log('Generated redirect URL:', redirectUrl)
 
