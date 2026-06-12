@@ -132,7 +132,7 @@ export function Setup({ onAuth }: Props) {
         provider: 'google',
         options: {
           skipBrowserRedirect: true, // Crucial for Framer plugins (iframes)
-          redirectTo: `${OAUTH_CALLBACK_URL}?loginId=${loginId}`,
+          redirectTo: `${window.location.origin}/callback.html?loginId=${loginId}`,
           queryParams: {
             access_type: 'offline',
             prompt: 'select_account',
